@@ -8,12 +8,10 @@ import com.vividsolutions.jts.geom.Point;
 public class Node
 {
     // Constantes pour les types de transport
-    public static final int UNDEFINED = 0;
-    public static final int SUBWAY = 1;
-    public static final int BUS = 2;
+    public static final int UNDEFINED = 0,  SUBWAY = 1, BUS = 2, RAIL = 3;
     //  Attributs
+    int type;
     final String id;
-    final int type;
     final private double x;
     final private double y;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31,4 +29,9 @@ public class Node
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public double getX(){return this.x;}
     public double getY(){return this.y;}
+    public int getType(){return this.type;}
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**                                     Modificateurs                                            */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public void setType(final int type) {this.type = type;}
 }

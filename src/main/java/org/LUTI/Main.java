@@ -11,15 +11,14 @@ public class Main
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static void main(String[] args)
     {
+        //Créer un reseau à partir d'un fichier
         String csvPath = "C:\\Documents\\Prog\\Java\\LUTI_Model_Maven\\src\\main\\java\\org\\LUTI\\TC.csv";
-
         List<String[]> dataLines = NetworkReader.extractDataCSV(csvPath, ';');
-        List<TC_Line> transportLines = NetworkReader.createTCLines(dataLines);
         Network network = new Network();
-        for(TC_Line transportLine: transportLines)
-            network.addTC_Line(transportLine);
-        NetworkUserInterface networkUserInterface = new NetworkUserInterface();
+        network.addGraph(NetworkReader.createGlobalGraph(dataLines));
+
+        //Affiche le réseau
+        UserInterface networkUserInterface = new UserInterface();
         networkUserInterface.displayNetwork(network);
-        networkUserInterface.setVisible(true);
     }
 }

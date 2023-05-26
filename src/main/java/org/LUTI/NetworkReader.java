@@ -9,7 +9,6 @@ import com.vividsolutions.jts.geom.*;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
-import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
 import java.io.FileReader;
@@ -22,8 +21,10 @@ import java.util.List;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public class NetworkReader
 {
+    public static final String SHAPE = "Shape", TYPE = "Route Type";
+    public static final String SUBWAY = "Subway", BUS = "Bus", RAIL = "Rail";
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Lit un fichier CSV et renvoit une liste de tableau representant les colonnes de chaque ligne */
+    /**          Lit un fichier CSV et renvoit une liste contenant chaque ligne du fichier           */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static List<String[]> extractDataCSV(String csvFilePath, char delimiter)
     {
@@ -35,33 +36,48 @@ public class NetworkReader
         return lines;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                Transforme chaque ligne du fichier en objet TC_Line                           */
+    /**                     Transforme chaque ligne du fichier en un Graph                           */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static List<TC_Line> createTCLines(List<String[]> dataLines)
+    public static Graph<Node,Link> createGlobalGraph(List<String[]> dataLines)
     {
-        List<TC_Line> transportLines = new ArrayList<>();
+        Graph<Node,Link> globalGraph = new SimpleGraph<>(Link.class);
         List<String> header = Arrays.asList(dataLines.get(0));
-        if(header.contains("Shape"))
-            for(int i = 2; i < dataLines.size(); i++)
-                transportLines.add(createTCLine(header, dataLines.get(i)));
-        return transportLines;
+        if(header.contains(SHAPE))
+            for(int i = 1; i < dataLines.size(); i++)
+                Graphs.addGraph(globalGraph , createGraph(header,dataLines.get(i)));
+        return globalGraph;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                   Transforme une ligne d'un fichier en objet TC_Line                         */
+    /**                   Transforme une ligne d'un fichier en Graph                         */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static TC_Line createTCLine(List<String> header, String[] dataLine)
+    public static Graph<Node,Link> createGraph(List<String> header, String[] dataLine)
     {
-        String id = dataLine[0];
-        String type = dataLine[header.indexOf("Route Type")];
-        Graph<Node,DefaultEdge> graph = geoJSONToGraph(dataLine[header.indexOf("Shape")]);
-        return new TC_Line(id,type, graph);
+        //Créer le graph à partir de la shape
+        Graph<Node,Link> graph = geoJSONToGraph(dataLine[header.indexOf(SHAPE)]);
+        //Définit le type des noeuds (metro, bus etc)
+        if(header.contains(TYPE))
+            for(Node node:graph.vertexSet())
+                node.setType(stringToNodeType(dataLine[header.indexOf(TYPE)]));
+        return graph;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**                          Convertit une String en type de noeud                               */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public static int stringToNodeType(String type)
+    {
+        switch(type) {
+            case SUBWAY:return Node.SUBWAY;
+            case BUS:return Node.BUS;
+            case RAIL:return Node.RAIL;
+            default:return Node.UNDEFINED;
+        }
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                   Convertit une String au format GeoJSON en graph                            */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static Graph<Node,DefaultEdge> geoJSONToGraph(String shape)
+    public static Graph<Node,Link> geoJSONToGraph(String shape)
     {
-        Graph<Node,DefaultEdge> graph = new SimpleGraph<>(DefaultEdge.class);
+        Graph<Node,Link> graph = new SimpleGraph<>(Link.class);
         GeometryJSON geometryJSON = new GeometryJSON();
         try
         {
@@ -77,25 +93,23 @@ public class NetworkReader
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                            Convertit un MultiLineString en Graph                             */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static Graph<Node,DefaultEdge> multiLineStringToGraph(MultiLineString multiLineString)
+    public static Graph<Node,Link> multiLineStringToGraph(MultiLineString multiLineString)
     {
-        Graph<Node,DefaultEdge> graph = new SimpleGraph<>(DefaultEdge.class);
+        Graph<Node,Link> graph = new SimpleGraph<>(Link.class);
         int numGeometries = multiLineString.getNumGeometries();
-        for (int i = 0; i < numGeometries; i++)
-        {
+        for (int i = 0; i < numGeometries; i++) {
             LineString lineString = (LineString) multiLineString.getGeometryN(i);
-            Graph<Node,DefaultEdge> lineGraph = lineStringToGraph(lineString);
-            Graphs.addAllVertices(graph, lineGraph.vertexSet());
-            Graphs.addAllEdges(graph, lineGraph, lineGraph.edgeSet());
+            Graph<Node,Link> lineGraph = lineStringToGraph(lineString);
+            Graphs.addGraph(graph,lineGraph);
         }
         return graph;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                              Convertit un LineString en Graph                                */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static Graph<Node,DefaultEdge>  lineStringToGraph(LineString lineString)
+    public static Graph<Node,Link>  lineStringToGraph(LineString lineString)
     {
-        Graph<Node,DefaultEdge> graph = new SimpleGraph<>(DefaultEdge.class);
+        Graph<Node,Link> graph = new SimpleGraph<>(Link.class);
         Coordinate[] lineCoordinates = lineString.getCoordinates();
         Point point = new GeometryFactory().createPoint(lineCoordinates[0]);
         Node fromNode = new Node(point.getX(),point.getY());

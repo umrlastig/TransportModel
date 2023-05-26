@@ -1,23 +1,25 @@
 package org.LUTI;
 
-import java.util.HashMap;
+import org.jgrapht.Graph;
+import org.jgrapht.Graphs;
+import org.jgrapht.graph.SimpleGraph;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/**                                   reseau de transport                                        */
+/**                                   Reseau de transport                                        */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public class Network
 {
-    private final HashMap<String, TC_Line> transportLines;
+    private final Graph<Node,Link> graph;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                   Constructeur                                               */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public Network() {this.transportLines = new HashMap<String, TC_Line>();}
+    public Network() {this.graph = new SimpleGraph<>(Link.class);}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                     Accesseurs                                               */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public HashMap<String, TC_Line> getTC_Lines(){return this.transportLines;}
+    public Graph<Node,Link> getGraph(){return this.graph;}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                     Modificateurs                                            */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void addTC_Line(final TC_Line transportLine) {this.transportLines.put(transportLine.getId(), transportLine);}
+    public void addGraph(Graph<Node,Link> underGraph) {Graphs.addGraph(graph,underGraph);}
 }

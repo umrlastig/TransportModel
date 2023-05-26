@@ -5,7 +5,7 @@ import java.awt.*;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /**          Affiche un NetworkCanvas et permet de définir ses paramètres                        */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-public class NetworkUserInterface extends JFrame
+public class UserInterface extends JFrame
 {
     private final NetworkCanvas networkCanvas;
     private final JPanel graphContainer;
@@ -13,7 +13,7 @@ public class NetworkUserInterface extends JFrame
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                        Constructeur                                          */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public NetworkUserInterface()
+    public UserInterface()
     {
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.networkCanvas = new NetworkCanvas();
@@ -21,13 +21,15 @@ public class NetworkUserInterface extends JFrame
         this.buttonsContainer = new JPanel();
         this.setupGraphContainer();
         this.setupButtonsContainer();
-        this.setSize(new Dimension(1000,1000));
+        this.setSize(new Dimension(1000,800));
+        this.setVisible(true);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                      Initialise le JPanel qui va contenir le Graph                          */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private void setupGraphContainer()
     {
+        this.networkCanvas.setPreferredSize(new Dimension(900, 900));
         this.graphContainer.add(networkCanvas, BorderLayout.CENTER);
         this.graphContainer.setBackground(Color.black);
         this.getContentPane().add(graphContainer, BorderLayout.CENTER);
@@ -38,11 +40,21 @@ public class NetworkUserInterface extends JFrame
     private void setupButtonsContainer()
     {
         this.buttonsContainer.setBackground(Color.red);
-        this.buttonsContainer.add(new JButton("Bus"));
-        this.buttonsContainer.add(new JButton("Subway"));
-        this.buttonsContainer.add(new JButton("Tram"));
-        this.buttonsContainer.add(new JButton("Rail"));
+        this.buttonsContainer.add(this.createDisplayedTypeChangerButton("Bus",Node.BUS));
+        this.buttonsContainer.add(this.createDisplayedTypeChangerButton("Subway",Node.SUBWAY));
+        this.buttonsContainer.add(this.createDisplayedTypeChangerButton("Rail",Node.RAIL));
+        this.buttonsContainer.add(this.createDisplayedTypeChangerButton("Undefined",Node.UNDEFINED));
+
         this.getContentPane().add(buttonsContainer, BorderLayout.SOUTH);
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**          Créer un bouton pour définir le type de noeuds affichés dans NetworkCanvas          */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    private JButton createDisplayedTypeChangerButton(String text, int nodeType)
+    {
+        JButton button = new JButton(text);
+        button.addActionListener(e -> {networkCanvas.setDisplayedNodeType(nodeType);repaint();});
+        return button;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                Définit le réseau à afficher                                  */
