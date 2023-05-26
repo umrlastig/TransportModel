@@ -1,25 +1,23 @@
 package org.LUTI;
 
-import org.checkerframework.checker.units.qual.A;
+import java.util.HashMap;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-
-/** Réseau de transport **/
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/**                                   reseau de transport                                        */
+///////////////////////////////////////////////////////////////////////////////////////////////////
 public class Network
 {
-    final private ArrayList<Node> aNodes;
-    final private ArrayList<Link> aLinks;
-    /** Constructeur **/
-    public Network()
-    {
-        this.aNodes = new ArrayList<>();
-        this.aLinks = new ArrayList<>();
-    }
-    /** Modificateurs **/
-    public void addNode(final Node node){this.aNodes.add(node);}
-    public void addLink(final Link link){this.aLinks.add(link);}
-    /** Accesseurs **/
-    public ArrayList<Node> getNodes(){return this.aNodes;}
-    public ArrayList<Link> getLinks(){return this.aLinks;}
+    private final HashMap<String, TC_Line> transportLines;
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**                                   Constructeur                                               */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public Network() {this.transportLines = new HashMap<String, TC_Line>();}
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**                                     Accesseurs                                               */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public HashMap<String, TC_Line> getTC_Lines(){return this.transportLines;}
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**                                     Modificateurs                                            */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public void addTC_Line(final TC_Line transportLine) {this.transportLines.put(transportLine.getId(), transportLine);}
 }

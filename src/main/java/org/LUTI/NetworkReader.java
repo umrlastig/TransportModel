@@ -1,84 +1,113 @@
 package org.LUTI;
 
+import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvException;
 import com.vividsolutions.jts.geom.*;
-import org.checkerframework.checker.units.qual.C;
 import org.geotools.geojson.geom.GeometryJSON;
+import org.jgrapht.Graph;
+import org.jgrapht.Graphs;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleGraph;
 
 import java.io.FileReader;
 import java.io.IOException;
-/** Classe chargée d'ajouter les noeuds et liens du réseau de transport à partir de fichiers **/
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/**              Contient tout les méthodes pour construire un Graph à partir de fichiers        */
+///////////////////////////////////////////////////////////////////////////////////////////////////
 public class NetworkReader
 {
-    final private Network aNetwork;
-    /** Constructeur **/
-    public NetworkReader(final Network network)
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** Lit un fichier CSV et renvoit une liste de tableau representant les colonnes de chaque ligne */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public static List<String[]> extractDataCSV(String csvFilePath, char delimiter)
     {
-        this.aNetwork = network;
-    }
-    /////////////////////////////////////////////////
-    /**     Traite un fichier de donnée csv       **/
-    /////////////////////////////////////////////////
-    public void readFile(String csvFilePath)
-    {
-        try (CSVReader reader =  new CSVReaderBuilder(new FileReader(csvFilePath))
-                .withCSVParser(new CSVParserBuilder().withSeparator(';').build()).build())
-        {
-            // Lecture des lignes du fichier CSV
-            // Une case du tableau = une colonne de la ligne
-            //Première ligne = entête
-            String[] headers = reader.readNext();
-            //Pour chaque ligne
-            String[] line;
-            while ((line = reader.readNext()) != null)
-                parseLine(headers, line);
-        }
+        List<String[]> lines = new ArrayList<>();
+        CSVParser parser = new CSVParserBuilder().withSeparator(delimiter).build();
+        try (CSVReader reader =  new CSVReaderBuilder(new FileReader(csvFilePath)).withCSVParser(parser).build()){
+            lines = reader.readAll();}
         catch(IOException | CsvException e){e.printStackTrace();}
+        return lines;
     }
-    ///////////////////////////////////////////////////////////////
-    /** Traite une ligne d'un fichier de donnees csv
-     * (Repartition des colonnes vers les methodes appropriees) **/
-    //////////////////////////////////////////////////////////////
-    private void parseLine( String[] headerColumns, String[] lineColumns)
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**                Transforme chaque ligne du fichier en objet TC_Line                           */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public static List<TC_Line> createTCLines(List<String[]> dataLines)
     {
-        for(int i = 0; i < headerColumns.length; i++)
-        {
-            System.out.println(headerColumns[i]);
-            switch (headerColumns[i]) {
-                case "Shape": parseShape(lineColumns[i]);break;
-            }
-        }
+        List<TC_Line> transportLines = new ArrayList<>();
+        List<String> header = Arrays.asList(dataLines.get(0));
+        if(header.contains("Shape"))
+            for(int i = 2; i < dataLines.size(); i++)
+                transportLines.add(createTCLine(header, dataLines.get(i)));
+        return transportLines;
     }
-    ////////////////////////////////////////////////////////////////////
-    /** Traite la colonne Shape au format JSon pour une ligne donnée **/
-    ////////////////////////////////////////////////////////////////////
-    private void parseShape(String shape) {
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**                   Transforme une ligne d'un fichier en objet TC_Line                         */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public static TC_Line createTCLine(List<String> header, String[] dataLine)
+    {
+        String id = dataLine[0];
+        String type = dataLine[header.indexOf("Route Type")];
+        Graph<Node,DefaultEdge> graph = geoJSONToGraph(dataLine[header.indexOf("Shape")]);
+        return new TC_Line(id,type, graph);
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**                   Convertit une String au format GeoJSON en graph                            */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public static Graph<Node,DefaultEdge> geoJSONToGraph(String shape)
+    {
+        Graph<Node,DefaultEdge> graph = new SimpleGraph<>(DefaultEdge.class);
         GeometryJSON geometryJSON = new GeometryJSON();
-        try {
+        try
+        {
             Geometry geometry = geometryJSON.read(shape);
-
-            if (geometry instanceof MultiLineString) {
-                MultiLineString multiLineString = (MultiLineString) geometry;
-                int numGeometries = multiLineString.getNumGeometries();
-                Coordinate[][][] coordinates = new Coordinate[numGeometries][][];
-
-                for (int i = 0; i < numGeometries; i++)
-                {
-                    LineString lineString = (LineString) multiLineString.getGeometryN(i);
-                    Coordinate[] lineCoordinates = lineString.getCoordinates();
-                    for (int j = 0; j < lineCoordinates.length - 1; j++)
-                    {
-                        Node fromNode = new Node(new GeometryFactory().createPoint(lineCoordinates[j]));
-                        Node toNode = new Node(new GeometryFactory().createPoint(lineCoordinates[j + 1]));
-                        Link link = new Link(fromNode, toNode);
-                        this.aNetwork.addLink(link);
-                        this.aNetwork.addNode(toNode);
-                    }
-                }
-            }
-        } catch (Exception e) {e.printStackTrace();}
+            if (geometry instanceof  MultiLineString)
+                graph = multiLineStringToGraph((MultiLineString) geometry);
+            if (geometry instanceof  LineString)
+                graph = lineStringToGraph((LineString) geometry);
+        }
+        catch (Exception e) {e.printStackTrace();}
+        return graph;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**                            Convertit un MultiLineString en Graph                             */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public static Graph<Node,DefaultEdge> multiLineStringToGraph(MultiLineString multiLineString)
+    {
+        Graph<Node,DefaultEdge> graph = new SimpleGraph<>(DefaultEdge.class);
+        int numGeometries = multiLineString.getNumGeometries();
+        for (int i = 0; i < numGeometries; i++)
+        {
+            LineString lineString = (LineString) multiLineString.getGeometryN(i);
+            Graph<Node,DefaultEdge> lineGraph = lineStringToGraph(lineString);
+            Graphs.addAllVertices(graph, lineGraph.vertexSet());
+            Graphs.addAllEdges(graph, lineGraph, lineGraph.edgeSet());
+        }
+        return graph;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**                              Convertit un LineString en Graph                                */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public static Graph<Node,DefaultEdge>  lineStringToGraph(LineString lineString)
+    {
+        Graph<Node,DefaultEdge> graph = new SimpleGraph<>(DefaultEdge.class);
+        Coordinate[] lineCoordinates = lineString.getCoordinates();
+        Point point = new GeometryFactory().createPoint(lineCoordinates[0]);
+        Node fromNode = new Node(point.getX(),point.getY());
+        graph.addVertex(fromNode);
+        GeometryFactory factory = new GeometryFactory();
+        for (int j = 1; j < lineCoordinates.length; j++) {
+            point = factory.createPoint(lineCoordinates[j]);
+            Node toNode = new Node(point.getX(),point.getY());
+            graph.addVertex(toNode);
+            graph.addEdge(fromNode,toNode);
+            fromNode = toNode;
+        }
+        return graph;
     }
 }
