@@ -1,0 +1,32 @@
+package org.TransportModel.network;
+
+import java.util.HashMap;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+/**    Network class represents a transportation network containing a graph of nodes and links   */
+///////////////////////////////////////////////////////////////////////////////////////////////////
+public class Network
+{
+    private final HashMap<String,Node> nodes;
+    private final HashMap<String,Link> links;
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**                                       Constructor                                            */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public Network()
+    {
+        this.nodes = new HashMap<>();
+        this.links = new HashMap<>();
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**                                        Getters                                               */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public Node getNode(String id){return this.nodes.get(id);}
+    public HashMap<String,Node> getNodes(){return this.nodes;}
+    public Link getLink(String id){return this.links.get(id);}
+    public HashMap<String,Link> getLinks(){return this.links;}
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**                                        Setters                                               */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public void addNode(Node node) {this.nodes.put(node.getId(),node);}
+    public void addLink(Link link) {this.links.put(link.getId(),link);}
+}
