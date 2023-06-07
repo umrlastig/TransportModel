@@ -1,25 +1,25 @@
 package org.TransportModel.network;
 
+import org.locationtech.jts.geom.Coordinate;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /**                   Node class represents a node in the transportation network                 */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public class Node
 {
-    final String id;
-    final private double x, y;
+    final private String id;
+    final private Coordinate coordinate;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                        Constructor                                           */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public Node(String id, final double x, final double y)
+    public Node(Coordinate coordinate) {this(coordinate.x+":"+coordinate.y,coordinate);}
+    public Node(String id, Coordinate coordinate)
     {
-        this.id = null;
-        this.x = x;
-        this.y = y;
+        this.id = id;
+        this.coordinate = coordinate;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                          Getters                                             */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public double getX(){return this.x;}
-    public double getY(){return this.y;}
+    public Coordinate getCoordinate(){return this.coordinate;}
     public String getId(){return this.id;}
 }

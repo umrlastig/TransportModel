@@ -1,70 +1,30 @@
 package org.TransportModel.network.io;
 
 import org.TransportModel.network.Link;
-import org.TransportModel.network.Network;
 import org.TransportModel.network.Node;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.MultiLineString;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/**          NetworkReader class in MATSim is used for reading and importing network data        */
+/**             NetworkReader class is used for reading and importing network data               */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-public class NetworkReader
+public abstract class NetworkReader
 {
-    public final static String NODE_ID = "stop_id", NODE_X = "stop_lon",NODE_Y = "stop_la";
-    public final static String LINK_ID = "pathway_id", LINK_FROM_ID = "from_stop_id",LINK_TO_ID = "to_stop_id";
+    enum LINK_ATTRIBUTES {ID, FROM_ID, TO_ID, LENGTH, CAPACITY, SPEED, BIDIRECTIONAL,TIME}
+    enum NODE_ATTRIBUTES {ID, X, Y}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**     Reads a file containing nodes data and imports nodes into the network as a parameter     */
+    /** Extracts data from a file using the specified delimiter.
+     @param filePath the path to the file to be read
+     @param delimiter the character used to separate values in each line
+     @return a list of string arrays containing the extracted data (1 line = 1 array) */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static void readNodeFile(Network network, String filePath, char delimiter)
-    {
-        List<String[]> dataLines = NetworkReader.extractData(filePath, delimiter);
-        List<String> headers = Arrays.asList(dataLines.get(0));
-        if(!headers.contains(NODE_ID)||!headers.contains(NODE_X)||!headers.contains(NODE_Y))
-            throw new RuntimeException("Node's header not found");
-        for(int i = 1; i < dataLines.size(); i++){
-            network.addNode(NetworkReader.createNodeFromDataLine(headers, dataLines.get(i)));}
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                               Create a Node from a data line                                 */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private static Node createNodeFromDataLine(List<String> headers, String[] dataLine)
-    {
-        String id = dataLine[headers.indexOf(NODE_ID)];
-        double x = Double.parseDouble(dataLine[headers.indexOf(NODE_X)]);
-        double y = Double.parseDouble(dataLine[headers.indexOf(NODE_Y)]);
-        return new Node(id,x,y);
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**     Reads a file containing links data and imports links into the network as a parameter     */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static void readLinkFile(Network network, String filePath, char delimiter)
-    {
-        List<String[]> dataLines = NetworkReader.extractData(filePath, delimiter);
-        List<String> headers = Arrays.asList(dataLines.get(0));
-        if(!headers.contains(LINK_ID)||!headers.contains(LINK_FROM_ID)||!headers.contains(LINK_TO_ID))
-            throw new RuntimeException("Link's header not found");
-        for(int i = 1; i < dataLines.size(); i++){
-            network.addLink(NetworkReader.createLinkFromDataLine(network, headers, dataLines.get(i)));}
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                               Create a Node from a data line                                 */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private static Link createLinkFromDataLine(Network network, List<String> headers, String[] dataLine)
-    {
-        String id = dataLine[headers.indexOf(LINK_ID)];
-        Node fromNode = network.getNode(dataLine[headers.indexOf(LINK_FROM_ID)]);
-        Node toNode = network.getNode(dataLine[headers.indexOf(LINK_TO_ID)]);
-        return new Link(id,fromNode,toNode);
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                          Returns a list of String arrays of a TXT file                       */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private static List<String[]> extractData(String filePath, char delimiter)
+    protected List<String[]> extractData(String filePath, char delimiter)
     {
         List<String[]> lines = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
@@ -73,5 +33,48 @@ public class NetworkReader
                 lines.add(line.split(String.valueOf(delimiter)));
         }catch (IOException e) {e.printStackTrace();}
         return lines;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** Extracts data from a file using the specified delimiter.
+     @param filePath the path to the file to be read
+     @return a list of string (1 line = 1 String) */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    protected List<String> extractData(String filePath)
+    {
+        List<String> lines = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while((line = reader.readLine()) != null)
+                lines.add(line);
+        }catch (IOException e) {e.printStackTrace();}
+        return lines;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** Creates a list of links from a MultiLineString by transforming each linestring into a link
+    * @param multiLineString the MultiLineString from which to create the links
+    * @return a list of links created from the MultiLineString */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    protected List<Link> createLinksFromMultiLineString( MultiLineString multiLineString)
+    {
+        List<Link> links = new ArrayList<>();
+        int numGeometries = multiLineString.getNumGeometries();
+        for (int i = 0; i < numGeometries; i++)
+            links.add(createLinkFromLineString((LineString) multiLineString.getGeometryN(i)));
+        return links;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** Creates a Link between the first and the last point of the LineString
+     * The length of the Link is calculated based on the entire LineString segment
+     * @param lineString the LineString from which to create the link
+     * @return a Link object created from the LineString */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    protected Link createLinkFromLineString(LineString lineString)
+    {
+        Coordinate[] lineCoordinates = lineString.getCoordinates();
+        Node fromNode = new Node(lineCoordinates[0]);
+        Node toNode = new Node(lineCoordinates[lineCoordinates.length-1]);
+        Link link = new Link(fromNode,toNode);
+        link.setLengthInM((int)lineString.getLength());
+        return link;
     }
 }

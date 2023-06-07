@@ -5,37 +5,43 @@ package org.TransportModel.network;
 public class Link
 {
     //Essentials
-    final private String id;
-    final private Node fromNode, toNode;
+    final String id;
+    private Node fromNode, toNode;
     //Optional
     private boolean isBidirectional;
-    private Double capacity, lengthInM, averageSpeedInMS;
+    private Integer normalSpeedInKMH, normalTimeInS, capacity, lengthInM;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                        Constructor                                           */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public Link(Node fromNode, Node toNode){this(fromNode.getId()+":"+toNode.getId(),fromNode,toNode);}
     public Link(String id, Node fromNode, Node toNode)
     {
         this.id = id;
         this.fromNode = fromNode;
         this.toNode = toNode;
         this.isBidirectional = false;
-        this.capacity = this.lengthInM = this.averageSpeedInMS = null;
+        this.normalSpeedInKMH = this.normalTimeInS = this.capacity = this.lengthInM = null;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                          Getters                                             */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public Double getAverageSpeedInMS(){return this.averageSpeedInMS;}
     public boolean isBidirectional(){return this.isBidirectional;}
-    public Double getLengthInM(){return this.lengthInM;}
-    public Double getCapacity(){return this.capacity;}
+    public Integer getNormalSpeedInKMH(){return this.normalSpeedInKMH;}
+    public Integer getNormalTimeInS(){return this.normalTimeInS;}
+    public Integer getLengthInM(){return this.lengthInM;}
+    public Integer getCapacity(){return this.capacity;}
     public Node getFromNode(){return this.fromNode;}
     public Node getToNode(){return this.toNode;}
-    public String getId(){return this.id;}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                          Setters                                             */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void setAverageSpeedInMS(double averageSpeedInMS){this.averageSpeedInMS = averageSpeedInMS;}
+    public void inverseDirection(){Node tempo = this.fromNode; this.fromNode = this.toNode; this.toNode = tempo;}
     public void setBidirectional(boolean isBidirectional){this.isBidirectional = isBidirectional;}
-    public void setLengthInM(double lengthInM){this.lengthInM = lengthInM;}
-    public void setCapacity(double capacity){this.capacity = capacity;}
+    public void setNormalSpeedInKMH(Integer speed){this.normalSpeedInKMH = speed;}
+    public void setNormalTimeInS(Integer time){this.normalTimeInS = time;}
+    public void setLengthInM(Integer length){this.lengthInM = length;}
+    public void setCapacity(Integer capacity){this.capacity = capacity;}
+    public void setFromNode(Node node){this.fromNode = node;}
+    public void setToNode(Node node){this.toNode = node;}
+    public String getId(){return this.id;}
 }

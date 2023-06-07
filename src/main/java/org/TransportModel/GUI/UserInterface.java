@@ -1,8 +1,5 @@
 package org.TransportModel.GUI;
 
-import org.TransportModel.network.Network;
-import org.TransportModel.network.Node;
-
 import javax.swing.*;
 import java.awt.*;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10,7 +7,6 @@ import java.awt.*;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public class UserInterface extends JFrame
 {
-    private final NetworkCanvas networkCanvas;
     private final JPanel graphContainer;
     private final JPanel buttonsContainer;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19,7 +15,6 @@ public class UserInterface extends JFrame
     public UserInterface()
     {
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.networkCanvas = new NetworkCanvas();
         this.graphContainer = new JPanel();
         this.buttonsContainer = new JPanel();
         this.setupGraphContainer();
@@ -32,8 +27,7 @@ public class UserInterface extends JFrame
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private void setupGraphContainer()
     {
-        this.networkCanvas.setPreferredSize(new Dimension(900, 900));
-        this.graphContainer.add(networkCanvas, BorderLayout.CENTER);
+
         this.graphContainer.setBackground(Color.black);
         this.getContentPane().add(graphContainer, BorderLayout.CENTER);
     }
@@ -46,16 +40,13 @@ public class UserInterface extends JFrame
         this.getContentPane().add(buttonsContainer, BorderLayout.SOUTH);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**          Créer un bouton pour définir le type de noeuds affichés dans NetworkCanvas          */
+    /**              Initialise le JPanel qui va contenir les boutons d'option                       */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private JButton createDisplayedTypeChangerButton(String text, int nodeType)
+    public void setComponent(JComponent component)
     {
-        JButton button = new JButton(text);
-        button.addActionListener(e -> {networkCanvas.setDisplayedNodeType(nodeType);repaint();});
-        return button;
+        component.setPreferredSize(new Dimension(900, 900));
+        this.graphContainer.add(component, BorderLayout.CENTER);
+        this.revalidate();
+        this.repaint();
     }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                                Définit le réseau à afficher                                  */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void displayNetwork(Network network) {this.networkCanvas.setNetwork(network);}
 }

@@ -16,9 +16,9 @@ public class NetworkCanvas extends JComponent
     private Double[] bounds;
     private Network network;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                                          Constructeur                                        */
+    /**                                          Modificateurs                                       */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public NetworkCanvas() {}
+    public NetworkCanvas(Network network){this.network = network;this.setupBounds();}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                          Modificateurs                                       */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30,10 +30,10 @@ public class NetworkCanvas extends JComponent
     {
         this.bounds = new Double[]{null, null, null, null};
         for (Node node : this.network.getNodes().values()) {
-            bounds[0] = (bounds[0] == null || bounds[0] > node.getX()) ? node.getX() : bounds[0];
-            bounds[1] = (bounds[1] == null || bounds[1] > node.getY()) ? node.getY() : bounds[1];
-            bounds[2] = (bounds[2] == null || bounds[2] < node.getX()) ? node.getX() : bounds[2];
-            bounds[3] = (bounds[3] == null || bounds[3] < node.getY()) ? node.getY() : bounds[3];
+            bounds[0] = (bounds[0] == null || bounds[0] > node.getCoordinate().x) ? node.getCoordinate().x : bounds[0];
+            bounds[1] = (bounds[1] == null || bounds[1] > node.getCoordinate().y) ? node.getCoordinate().y : bounds[1];
+            bounds[2] = (bounds[2] == null || bounds[2] < node.getCoordinate().x) ? node.getCoordinate().x : bounds[2];
+            bounds[3] = (bounds[3] == null || bounds[3] < node.getCoordinate().y) ? node.getCoordinate().y : bounds[3];
         }
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,25 +42,42 @@ public class NetworkCanvas extends JComponent
     @Override
     public void paintComponent(Graphics g)
     {
-        if (this.network != null)
+        if (this.network != null && this.bounds[0]!=null) {
+            this.drawNodes(g);
             this.drawEdges(g);
+        }
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    /**                                     Dessine les noeuds                                      */
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    private void drawNodes(Graphics g)
+    {
+        g.setColor(Color.BLUE);
+        double screenWidth = this.getWidth(), screenHeight = this.getHeight();
+        double range = Math.max(this.bounds[2] - this.bounds[0], this.bounds[3] - this.bounds[1]);
+        for(Node node: this.network.getNodes().values())
+        {
+            int x = (int)((node.getCoordinate().x - bounds[0]) * screenWidth / range);
+            int y = (int)((node.getCoordinate().y - bounds[1]) * screenHeight / range);
+            g.fillOval(x,y,2,2);
+        }
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                     Dessine les arcs                                        */
     //////////////////////////////////////////////////////////////////////////////////////////////////
     private void drawEdges(Graphics g)
     {
-        g.setColor(Color.blue);
+        g.setColor(Color.red);
         double screenWidth = this.getWidth(), screenHeight = this.getHeight();
         double range = Math.max(this.bounds[2] - this.bounds[0], this.bounds[3] - this.bounds[1]);
         for (Link link : this.network.getLinks().values())
         {
-            Node source = link.getFromNode();
-            Node target = link.getToNode();
-            int x1 = (int)((source.getX() - bounds[0]) * screenWidth / range);
-            int y1 = (int)((source.getY() - bounds[1]) * screenHeight / range);
-            int x2 = (int)((target.getX() - bounds[0]) * screenWidth / range);
-            int y2 = (int)((target.getY() - bounds[1]) * screenHeight / range);
+            Node from = link.getFromNode();
+            Node to = link.getToNode();
+            int x1 = (int)((from.getCoordinate().x - bounds[0]) * screenWidth / range);
+            int y1 = (int)((from.getCoordinate().y - bounds[1]) * screenHeight / range);
+            int x2 = (int)((to.getCoordinate().x - bounds[0]) * screenWidth / range);
+            int y2 = (int)((to.getCoordinate().y - bounds[1]) * screenHeight / range);
             g.drawLine(x1, y1, x2, y2);
         }
     }
