@@ -29,7 +29,7 @@ public class Main
 
         //Display Network
         UserInterface gUI = new UserInterface();
-        NetworkCanvas networkCanvas = new NetworkCanvas(network_TC);
+        NetworkCanvas networkCanvas = new NetworkCanvas(network_TI);
         gUI.setComponent(networkCanvas);
     }
 }

@@ -11,7 +11,7 @@ public class Node
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                        Constructor                                           */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public Node(Coordinate coordinate) {this(coordinate.x+":"+coordinate.y,coordinate);}
+    public Node(Coordinate coordinate) {this(coordinate.x + ":" + coordinate.y,coordinate);}
     public Node(String id, Coordinate coordinate)
     {
         this.id = id;

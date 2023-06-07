@@ -16,9 +16,12 @@ public class NetworkCanvas extends JComponent
     private Double[] bounds;
     private Network network;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                                          Modificateurs                                       */
+    /**                                          Constructor                                       */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public NetworkCanvas(Network network){this.network = network;this.setupBounds();}
+    public NetworkCanvas(Network network)
+    {
+        this.network = network;this.setupBounds();
+    }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                          Modificateurs                                       */
     ///////////////////////////////////////////////////////////////////////////////////////////////////

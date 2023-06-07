@@ -149,7 +149,8 @@ public class GTFSReader extends NetworkReader
                 if (headersIndex.containsKey(LINK_ATTRIBUTES.CAPACITY))
                     link.setCapacity(Integer.valueOf(dataLine[headersIndex.get(LINK_ATTRIBUTES.CAPACITY)]));
                 network.addLink(link);
-            } catch (Exception e) {e.printStackTrace();}
+            }
+            catch (Exception e) {e.printStackTrace();}
         }
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -159,14 +160,15 @@ public class GTFSReader extends NetworkReader
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private void createStopLinksFromStopTimes(String stopTimesFilePath, String stopLinksFilePath)
     {
-        List<String[]> trips = this.extractStopTimesLinks(stopTimesFilePath);
+        List<String[]> trips = this.extractStopTimesLinksData(stopTimesFilePath);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(stopLinksFilePath))) {
             writer.write("from_stop_id,to_stop_id,traversal_time");
             for (String[] stopTimeData : trips) {
                 writer.newLine();
                 writer.write(stopTimeData[0] + "," + stopTimeData[1] + "," + stopTimeData[2]);
             }
-        } catch (IOException e) {e.printStackTrace();}
+        }
+        catch (IOException e) {e.printStackTrace();}
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Extracts stop times data from a given file and creates links between stops with associated delays
@@ -174,18 +176,16 @@ public class GTFSReader extends NetworkReader
      * @return A HashMap containing the stop links data, where the key is the link ID and the value is an array
      * containing the from_node_id, to_node_id, and delay */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private List<String[]> extractStopTimesLinks(String filePath)
+    private List<String[]> extractStopTimesLinksData(String filePath)
     {
-        HashMap<String, String[]> trips = new HashMap<>();
+        HashMap<String, String[]> linksData = new HashMap<>();
         List<String> dataLines = this.extractData(filePath);
         List<String> headers = Arrays.asList(dataLines.remove(0).split(","));
-        for (int i = 0; i < dataLines.size() - 1; i++)
-        {
+        for (int i = 0; i < dataLines.size() - 1; i++) {
             String[] firstDataLine = dataLines.get(i).split(",");
             String[] secondDataLine = dataLines.get(i + 1).split(",");
             //If two consecutive data lines belong to the same trip, create a link between stops
-            if (firstDataLine[headers.indexOf("trip_id")].equals(secondDataLine[headers.indexOf("trip_id")]))
-            {
+            if (firstDataLine[headers.indexOf("trip_id")].equals(secondDataLine[headers.indexOf("trip_id")])) {
                 String from_node_id = firstDataLine[headers.indexOf("stop_id")];
                 String to_node_id = secondDataLine[headers.indexOf("stop_id")];
                 String link_id = from_node_id + ":" + to_node_id;
@@ -193,13 +193,13 @@ public class GTFSReader extends NetworkReader
                 String[] secondTimeStrings = secondDataLine[headers.indexOf("arrival_time")].split(":");
                 int delay = this.getStopTimeDelay(firstTimeStrings,secondTimeStrings);
                 //If the link already exists, keep the longest traversal time, otherwise add the link
-                if (trips.containsKey(link_id))
-                    trips.get(link_id)[2] = "" + Math.max(delay, Integer.parseInt(trips.get(link_id)[2]));
+                if (linksData.containsKey(link_id))
+                    linksData.get(link_id)[2] = "" + Math.max(delay, Integer.parseInt(linksData.get(link_id)[2]));
                 else
-                    trips.put(link_id, new String[]{from_node_id, to_node_id, "" + delay});
+                    linksData.put(link_id, new String[]{from_node_id, to_node_id, "" + delay});
             }
         }
-        return new ArrayList<>(trips.values());
+        return new ArrayList<>(linksData.values());
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Computes the delay between two given departure/arrival times.

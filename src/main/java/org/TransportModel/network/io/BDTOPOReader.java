@@ -17,7 +17,7 @@ import java.util.List;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public class BDTOPOReader extends NetworkReader
 {
-    public final static String SPEED= "VIT_MOY_VL";
+    public final static String SPEED = "VIT_MOY_VL";
     public final static String ACCESS = "ACCES_VL";
     public final static String DIRECTION = "SENS";
     public final static String ACCESS_FREE = "Libre";

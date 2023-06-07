@@ -13,7 +13,7 @@ public class Link
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                        Constructor                                           */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public Link(Node fromNode, Node toNode){this(fromNode.getId()+":"+toNode.getId(),fromNode,toNode);}
+    public Link(Node fromNode, Node toNode){this(fromNode.getId() + ":" + toNode.getId(),fromNode,toNode);}
     public Link(String id, Node fromNode, Node toNode)
     {
         this.id = id;

@@ -16,8 +16,8 @@ import java.util.List;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public abstract class NetworkReader
 {
-    enum LINK_ATTRIBUTES {ID, FROM_ID, TO_ID, LENGTH, CAPACITY, SPEED, BIDIRECTIONAL,TIME}
     enum NODE_ATTRIBUTES {ID, X, Y}
+    enum LINK_ATTRIBUTES {ID, FROM_ID, TO_ID, LENGTH, CAPACITY, SPEED, BIDIRECTIONAL,TIME}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Extracts data from a file using the specified delimiter.
      @param filePath the path to the file to be read

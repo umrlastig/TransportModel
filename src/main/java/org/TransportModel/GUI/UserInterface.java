@@ -27,7 +27,6 @@ public class UserInterface extends JFrame
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private void setupGraphContainer()
     {
-
         this.graphContainer.setBackground(Color.black);
         this.getContentPane().add(graphContainer, BorderLayout.CENTER);
     }
