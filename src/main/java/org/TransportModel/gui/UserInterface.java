@@ -1,4 +1,4 @@
-package org.TransportModel.GUI;
+package org.TransportModel.gui;
 
 import javax.swing.*;
 import java.awt.*;

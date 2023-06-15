@@ -1,9 +1,9 @@
 package org.TransportModel;
 
-import org.TransportModel.GUI.NetworkCanvas;
-import org.TransportModel.GUI.UserInterface;
-import org.TransportModel.Generation.Area;
-import org.TransportModel.Generation.io.ZoneReaderBDTOPO;
+import org.TransportModel.gui.NetworkCanvas;
+import org.TransportModel.gui.UserInterface;
+import org.TransportModel.generation.Area;
+import org.TransportModel.generation.io.ZoneReaderBDTOPO;
 import org.TransportModel.network.Network;
 import org.TransportModel.network.io.NetworkReaderBDTOPO;
 import org.TransportModel.network.io.NetworkReaderGTFS;

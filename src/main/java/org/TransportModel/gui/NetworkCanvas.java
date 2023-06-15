@@ -1,9 +1,8 @@
-package org.TransportModel.GUI;
+package org.TransportModel.gui;
 
 import org.TransportModel.network.Link;
 import org.TransportModel.network.Network;
 import org.TransportModel.network.Node;
-import org.jgrapht.Graph;
 
 import javax.swing.*;
 import java.awt.*;
