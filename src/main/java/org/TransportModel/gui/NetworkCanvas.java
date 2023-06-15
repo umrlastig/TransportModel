@@ -3,6 +3,7 @@ package org.TransportModel.gui;
 import org.TransportModel.network.Link;
 import org.TransportModel.network.Network;
 import org.TransportModel.network.Node;
+import org.locationtech.jts.geom.Coordinate;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,7 +20,8 @@ public class NetworkCanvas extends JComponent
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public NetworkCanvas(Network network)
     {
-        this.network = network;this.setupBounds();
+        this.network = network;
+        this.setupBounds();
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                          Modificateurs                                       */
@@ -55,13 +57,10 @@ public class NetworkCanvas extends JComponent
     private void drawNodes(Graphics g)
     {
         g.setColor(Color.BLUE);
-        double screenWidth = this.getWidth(), screenHeight = this.getHeight();
-        double range = Math.max(this.bounds[2] - this.bounds[0], this.bounds[3] - this.bounds[1]);
         for(Node node: this.network.getNodes().values())
         {
-            int x = (int)((node.getCoordinate().x - bounds[0]) * screenWidth / range);
-            int y = (int)((node.getCoordinate().y - bounds[1]) * screenHeight / range);
-            g.fillOval(x,y,2,2);
+            Coordinate coordinate = this.getScaledCoordinate(node.getCoordinate());
+            g.fillOval((int)coordinate.x,(int)coordinate.y,2,2);
         }
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,17 +69,21 @@ public class NetworkCanvas extends JComponent
     private void drawEdges(Graphics g)
     {
         g.setColor(Color.red);
-        double screenWidth = this.getWidth(), screenHeight = this.getHeight();
-        double range = Math.max(this.bounds[2] - this.bounds[0], this.bounds[3] - this.bounds[1]);
         for (Link link : this.network.getLinks().values())
         {
-            Node from = link.getFromNode();
-            Node to = link.getToNode();
-            int x1 = (int)((from.getCoordinate().x - bounds[0]) * screenWidth / range);
-            int y1 = (int)((from.getCoordinate().y - bounds[1]) * screenHeight / range);
-            int x2 = (int)((to.getCoordinate().x - bounds[0]) * screenWidth / range);
-            int y2 = (int)((to.getCoordinate().y - bounds[1]) * screenHeight / range);
-            g.drawLine(x1, y1, x2, y2);
+            Node fromNode = link.getFromNode();
+            Node toNode = link.getToNode();
+            Coordinate from = this.getScaledCoordinate(fromNode.getCoordinate());
+            Coordinate to = this.getScaledCoordinate(toNode.getCoordinate());
+            g.drawLine((int)from.x, (int)from.y, (int)to.x, (int)to.y);
         }
+    }
+    public Coordinate getScaledCoordinate(Coordinate coordinate)
+    {
+        double screenWidth = this.getWidth(), screenHeight = this.getHeight();
+        double range = Math.max(this.bounds[2] - this.bounds[0], this.bounds[3] - this.bounds[1]);
+        int x = (int)((coordinate.x - bounds[0]) * screenWidth / range);
+        int y = (int)((coordinate.y - bounds[1]) * screenHeight / range);
+        return new Coordinate(x,y);
     }
 }
