@@ -1,6 +1,6 @@
 package org.TransportModel.network;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/**     Link class represents a connection between two nodes in the transportation network       */
+/** Represents a connection between two nodes in the transportation network */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public class Link
 {
@@ -8,17 +8,15 @@ public class Link
     final String id;
     private Node fromNode, toNode;
     //Optional
-    private boolean isBidirectional;
     private double lengthInM, normalSpeedInMS, capacityPerHour;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                        Constructor                                           */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public Link(String id, Node fromNode, Node toNode, boolean bidirectional, double speed, double capacity, double length)
+    public Link(String id, Node fromNode, Node toNode, double speed, double capacity, double length)
     {
         this.id = id;
         this.fromNode = fromNode;
         this.toNode = toNode;
-        this.isBidirectional = bidirectional;
         this.normalSpeedInMS = speed;
         this.capacityPerHour = capacity;
         this.lengthInM = length;
@@ -26,7 +24,6 @@ public class Link
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                          Getters                                             */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public boolean isBidirectional(){return this.isBidirectional;}
     public double getNormalSpeedInMS(){return this.normalSpeedInMS;}
     public double getLengthInM(){return this.lengthInM;}
     public double getCapacityPerHour(){return this.capacityPerHour;}
@@ -35,7 +32,6 @@ public class Link
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                          Setters                                             */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void setBidirectional(boolean isBidirectional){this.isBidirectional = isBidirectional;}
     public void setNormalSpeedInMS(double speed){this.normalSpeedInMS = speed;}
     public void setLengthInM(double length){this.lengthInM = length;}
     public void setCapacityPerHour(double capacityPerHour){this.capacityPerHour = capacityPerHour;}

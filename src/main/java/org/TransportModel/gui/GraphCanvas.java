@@ -1,39 +1,45 @@
 package org.TransportModel.gui;
 
 import org.TransportModel.network.Link;
-import org.TransportModel.network.Network;
 import org.TransportModel.network.Node;
+import org.jgrapht.Graph;
+import org.jgrapht.GraphPath;
 import org.locationtech.jts.geom.Coordinate;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /**                        Représentation graphique d'un réseau                                  */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-public class NetworkCanvas extends JComponent
+public class GraphCanvas extends JComponent
 {
     private Double[] bounds;
-    private Network network;
+    private Graph<Node,Link> graph;
+    private List<GraphPath<Node, Link>> graphPaths;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                          Constructor                                       */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public NetworkCanvas(Network network)
+    public GraphCanvas(Graph<Node,Link> graph)
     {
-        this.network = network;
+        this.graph = graph;
         this.setupBounds();
+        this.graphPaths = new ArrayList<>();
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                          Modificateurs                                       */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void setNetwork(Network network) {this.network = network;this.setupBounds();}
+    public void setGraph(Graph<Node,Link> graph) {this.graph = graph;this.setupBounds();}
+    public void addPath(GraphPath<Node, Link> graphPath) {this.graphPaths.add(graphPath);}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                  Calcul les limites de coordonnés pour la mise à l'échelle                   */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private void setupBounds()
     {
         this.bounds = new Double[]{null, null, null, null};
-        for (Node node : this.network.getNodes().values()) {
+        for (Node node : this.graph.vertexSet()) {
             bounds[0] = (bounds[0] == null || bounds[0] > node.getCoordinate().x) ? node.getCoordinate().x : bounds[0];
             bounds[1] = (bounds[1] == null || bounds[1] > node.getCoordinate().y) ? node.getCoordinate().y : bounds[1];
             bounds[2] = (bounds[2] == null || bounds[2] < node.getCoordinate().x) ? node.getCoordinate().x : bounds[2];
@@ -46,7 +52,7 @@ public class NetworkCanvas extends JComponent
     @Override
     public void paintComponent(Graphics g)
     {
-        if (this.network != null && this.bounds[0]!=null) {
+        if (this.graph != null && this.bounds[0]!=null) {
             this.drawNodes(g);
             this.drawEdges(g);
         }
@@ -57,7 +63,7 @@ public class NetworkCanvas extends JComponent
     private void drawNodes(Graphics g)
     {
         g.setColor(Color.BLUE);
-        for(Node node: this.network.getNodes().values())
+        for(Node node: this.graph.vertexSet())
         {
             Coordinate coordinate = this.getScaledCoordinate(node.getCoordinate());
             g.fillOval((int)coordinate.x,(int)coordinate.y,2,2);
@@ -69,14 +75,20 @@ public class NetworkCanvas extends JComponent
     private void drawEdges(Graphics g)
     {
         g.setColor(Color.red);
-        for (Link link : this.network.getLinks().values())
+        for (Link link : this.graph.edgeSet())
         {
-            Node fromNode = link.getFromNode();
-            Node toNode = link.getToNode();
-            Coordinate from = this.getScaledCoordinate(fromNode.getCoordinate());
-            Coordinate to = this.getScaledCoordinate(toNode.getCoordinate());
+            Coordinate from = this.getScaledCoordinate(link.getFromNode().getCoordinate());
+            Coordinate to = this.getScaledCoordinate(link.getToNode().getCoordinate());
             g.drawLine((int)from.x, (int)from.y, (int)to.x, (int)to.y);
         }
+        g.setColor(Color.green);
+        for(GraphPath<Node,Link> graphPath:this.graphPaths)
+            for (Link link : graphPath.getEdgeList())
+            {
+                Coordinate from = this.getScaledCoordinate(link.getFromNode().getCoordinate());
+                Coordinate to = this.getScaledCoordinate(link.getToNode().getCoordinate());
+                g.drawLine((int)from.x, (int)from.y, (int)to.x, (int)to.y);
+            }
     }
     public Coordinate getScaledCoordinate(Coordinate coordinate)
     {
