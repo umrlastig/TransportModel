@@ -5,7 +5,6 @@ import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.locationtech.jts.geom.Coordinate;
 
 import java.util.HashMap;
-import java.util.Objects;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /** Represents a transportation network */
@@ -122,5 +121,28 @@ public class Network
                 graph.setEdgeWeight(link,time);
         }
         return graph;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** Add a node and link it to the shortest node
+     * @param nodeToLink The node to link */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public void addAndLinkNode(Node nodeToLink)
+    {
+        Node closestNode = null;
+        double shortestDistance = Double.MAX_VALUE;
+        for (Node node : this.nodes.values()) {
+            double distance = this.calculateDistance(nodeToLink.getCoordinate(), node.getCoordinate());
+            if (distance < shortestDistance){
+                shortestDistance = distance;
+                closestNode = node;
+            }
+        }
+        String directLinkId = nodeToLink.getId() + ":" + closestNode.getId();
+        String inverseLinkId = closestNode.getId() + ":" + nodeToLink.getId();
+        Link direct = new Link(directLinkId, closestNode, nodeToLink, 100000, 100000, 1, ROUTE_TYPE.FOOT);
+        Link inverse = new Link(inverseLinkId, nodeToLink, closestNode, 100000, 100000, 1, ROUTE_TYPE.FOOT);
+        this.addNode(nodeToLink);
+        this.addLink(direct);
+        this.addLink(inverse);
     }
 }
