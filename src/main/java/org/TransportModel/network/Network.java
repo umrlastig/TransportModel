@@ -1,23 +1,21 @@
 package org.TransportModel.network;
 
 import org.geotools.referencing.GeodeticCalculator;
-import org.jgrapht.Graph;
-import org.jgrapht.GraphPath;
-import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.locationtech.jts.geom.Coordinate;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/**    Network class represents a transportation network containing a graph of nodes and links   */
+/** Represents a transportation network */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public class Network
 {
     private final HashMap<String,Node> nodes;
     private final HashMap<String,Link> links;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                                       Constructor                                            */
+    /** Constructor */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public Network()
     {
@@ -25,7 +23,7 @@ public class Network
         this.links = new HashMap<>();
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                                        Getters                                               */
+    /** Getters/Setters */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public boolean containsNode(String id){return this.nodes.containsKey(id);}
     public boolean containsLink(String id){return this.nodes.containsKey(id);}
@@ -47,35 +45,45 @@ public class Network
         return calculator.getOrthodromicDistance();
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Creates and adds a new node with the specified attributes
-     * If the node already exists, updates its coordinates
-     * @param id         The ID of the node
-     * @param coordinate The coordinates of the node */
+    /** Adds a new node
+     * If the node already exists, replace  link's node linked
+     * @param node The Node to add */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void createAndAddNode(String id, Coordinate coordinate)
+    public void addNode(Node node)
     {
-        if(this.containsNode(id))
-            this.nodes.get(id).setCoordinate(coordinate);
-        else
-            this.nodes.put(id,new Node(id,coordinate));
+        //If Node already exist, replace it in every link
+        if(this.containsNode(node.getId()))
+        {
+            for(Link inLink:this.nodes.get(node.getId()).getInLinks().values())
+            {
+                node.addInLink(inLink);
+                inLink.setToNode(node);
+            }
+            for(Link outLink:this.nodes.get(node.getId()).getOutLinks().values())
+            {
+                node.addOutLink(outLink);
+                outLink.setFromNode(node);
+            }
+        }
+        this.nodes.put(node.getId(),node);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Creates and adds a new link with the specified attributes
-     * @param id         The ID of the link
-     * @param fromNodeId The ID of the source node
-     * @param toNodeId   The ID of the target node
-     * @param speed      The speed (m/s)
-     * @param capacity   The capacity (persons/hour)
-     * @param length     The length (m) */
+    /** Adds a new link
+     * @param link The link to add */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void createAndAddLink(String id,String fromNodeId,String toNodeId, double speed, double capacity, double length)
+    public void addLink(Link link)
     {
-        Node fromNode = this.getNode(fromNodeId);
-        Node toNode = this.getNode(toNodeId);
-        Link link = new Link(id,fromNode,toNode,speed,capacity,length);
-        fromNode.addOutLink(link);
+        Node fromNode = link.getFromNode();
+        Node toNode = link.getToNode();
+        if(fromNode.getId().equals(toNode.getId()))
+            return;
         toNode.addInLink(link);
-        this.links.put(id,link);
+        fromNode.addOutLink(link);
+        if(fromNode != this.getNode(fromNode.getId()))
+            this.addNode(fromNode);
+        if(toNode != this.getNode(toNode.getId()))
+            this.addNode(toNode);
+        this.links.put(link.getId(),link);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Removes the node and all associated links from the network
@@ -98,22 +106,10 @@ public class Network
         this.links.remove(id);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Retrieves the shortest path between the specified source node and target node in the network.
-     * @param fromNode The source node
-     * @param toNode   The target node
-     * @return The shortest path as a GraphPath object */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public GraphPath<Node, Link> getShortestPath(Node fromNode, Node toNode)
-    {
-        Graph<Node, Link> graph = this.createGraph();
-        DijkstraShortestPath<Node, Link> shortestPathAlgorithm = new DijkstraShortestPath<>(graph);
-        return shortestPathAlgorithm.getPath(fromNode, toNode);
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Creates a graph representation of the network using JGraphT library (weight = time)
      * @return The created graph */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public DirectedWeightedMultigraph<Node, Link> createGraph()
+    public DirectedWeightedMultigraph<Node,Link> createGraph()
     {
         DirectedWeightedMultigraph<Node, Link> graph = new DirectedWeightedMultigraph<>(Link.class);
         for(Node node:this.nodes.values())
@@ -121,7 +117,7 @@ public class Network
         for(Link link:this.links.values())
         {
             graph.addEdge(link.getFromNode(),link.getToNode(),link);
-            double time = link.getNormalSpeedInMS()/link.getLengthInM();
+            double time = link.getLengthInM()/link.getNormalSpeedInMS();
             if(graph.containsEdge(link))
                 graph.setEdgeWeight(link,time);
         }
