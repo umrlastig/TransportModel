@@ -1,6 +1,7 @@
 package org.TransportModel;
 
 import org.TransportModel.generation.Area;
+import org.TransportModel.generation.Zone;
 import org.TransportModel.generation.io.ZoneReaderBDTOPO;
 import org.TransportModel.network.Link;
 import org.TransportModel.network.Network;
@@ -23,7 +24,15 @@ public class Main
         Area idf = setupIDFArea();
         Network tcNetwork = setupTCNetwork();
         Network tiNetwork = setupTCNetwork();
-        displayShortestPath(tcNetwork,tcNetwork.getNode("IDFM:22015"),tcNetwork.getNode("IDFM:463025"));
+        //displayShortestPath(tcNetwork,tcNetwork.getNode("IDFM:22015"),tcNetwork.getNode("IDFM:463025"));
+        Zone commune1 = idf.getZone(""+7);
+        Node commune1Node = new Node(commune1.getId(),commune1.getName(),commune1.getCentroid());
+        Zone commune2 = idf.getZone(""+219);
+        Node commune2Node = new Node(commune2.getId(),commune2.getName(),commune2.getCentroid());
+        tcNetwork.addAndLinkNode(commune1Node);
+        tcNetwork.addAndLinkNode(commune2Node);
+        displayShortestPath(tcNetwork,commune1Node,commune2Node);
+        //entre les deux chateaux et lagny: 16.0833333333 (map = 34)
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
@@ -72,7 +81,7 @@ public class Main
         for(Link link:shortestPath.getEdgeList()){
             System.out.println("Entre "+link.getFromNode().getName()+" et "+link.getToNode().getName()+"" +
                     ": "+(int)graph.getEdgeWeight(link)+ "s en "+link.getType().name() + "("+link.getName()+")");
-            //System.out.println(link.getFromNode().getId()+" et "+link.getToNode().getId());
+           // System.out.println(link.getFromNode().getId()+" et "+link.getToNode().getId());
         }
         int hours = (int)shortestPath.getWeight() / 3600;
         int minutes = (int)(shortestPath.getWeight() % 3600) / 60;
