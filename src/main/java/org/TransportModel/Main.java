@@ -32,7 +32,6 @@ public class Main
         tcNetwork.addAndLinkNode(commune1Node);
         tcNetwork.addAndLinkNode(commune2Node);
         displayShortestPath(tcNetwork,commune1Node,commune2Node);
-        //entre les deux chateaux et lagny: 16.0833333333 (map = 34)
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
