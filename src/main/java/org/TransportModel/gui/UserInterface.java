@@ -41,7 +41,7 @@ public class UserInterface extends JFrame
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**              Initialise le JPanel qui va contenir les boutons d'option                       */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void setComponent(JComponent component)
+    public void display(JComponent component)
     {
         component.setPreferredSize(new Dimension(900, 900));
         this.graphContainer.add(component, BorderLayout.CENTER);

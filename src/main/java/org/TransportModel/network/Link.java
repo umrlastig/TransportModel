@@ -11,6 +11,7 @@ public class Link
     private Node fromNode, toNode;
     //Optional
     private double lengthInM, normalSpeedInMS, capacityPerHour;
+    public enum ROUTE_TYPE {TRAM_OR_LIGHT_SUBWAY, TRAIN, BUS, SUBWAY, UNDEFINED, FOOT, CAR;}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Constructor */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,3 +45,4 @@ public class Link
     public ROUTE_TYPE getType(){return this.type;}
     public String getName(){return this.name;}
 }
+

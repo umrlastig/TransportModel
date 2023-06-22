@@ -13,8 +13,8 @@ public class GTFS_FILE
             FROM_ID = "from_stop_id", TO_ID = "to_stop_id", BIDIRECTIONAL = "is_bidirectional",TIME = "traversal_time";}
     static class TRANSFERS {public static final String FILENAME = "/transfers.txt", FROM_ID = "from_stop_id",
             TO_ID = "to_stop_id", TIME = "min_transfer_time";}
-    static class SECTIONS {public static final String FILENAME = "/route_sections.txt", TIME = "traversal_time",
+    static class SECTIONS {public static final String FILENAME = "/route_sections.txt", AVG_TIME = "avg_time", MAX_TIME = "max_time",
             ROUTE_ID = "route_id", ROUTE_TYPE = "route_type", ROUTE_NAME = "route_name", FROM_ID = "from_stop_id",
-            TO_ID = "to_stop_id", FREQUENCY = "traversal_frequency", FIRST = "first_traversal", LAST = "last_traversal";}
+            TO_ID = "to_stop_id", FREQUENCY = "frequency", FIRST = "first_traversal", LAST = "last_traversal";}
 }
 

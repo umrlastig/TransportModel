@@ -70,6 +70,7 @@ public class GTFS_CONTAINERS
         private int traversalCount;
         private int firstTraversal;
         private int lastTraversal;
+        private int maxTraversalTime;
         private int averageTraversalTime;
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** */
@@ -79,6 +80,7 @@ public class GTFS_CONTAINERS
             this.fromId = fromId;
             this.toId = toId;
             this.traversalCount = 0;
+            this.maxTraversalTime = 0;
             this.averageTraversalTime = 0;
             this.firstTraversal = Integer.MAX_VALUE;
             this.lastTraversal = Integer.MIN_VALUE;
@@ -92,6 +94,7 @@ public class GTFS_CONTAINERS
             lastTraversal = Math.max(fromArrivalTime, lastTraversal);
             int traversalTime = Math.max(29,(toArrivalTime - fromArrivalTime));
             this.averageTraversalTime = (averageTraversalTime*traversalCount+traversalTime)/(traversalCount+1);
+            this.maxTraversalTime = Math.max(traversalTime,maxTraversalTime);
             this.traversalCount++;
         }
         ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,6 +102,7 @@ public class GTFS_CONTAINERS
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         public int getAverageFrequency(){return (this.lastTraversal-this.firstTraversal)/this.traversalCount;}
         public int getAverageTraversalTime() {return this.averageTraversalTime;}
+        public int getMaxTraversalTime() {return maxTraversalTime;}
         public int getFirstTraversal(){return this.firstTraversal;}
         public int getLastTraversal(){return this.lastTraversal;}
         public String getFromId(){return this.fromId;}

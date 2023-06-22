@@ -18,7 +18,7 @@ public class GraphCanvas extends JComponent
 {
     private Double[] bounds;
     private Graph<Node,Link> graph;
-    private List<GraphPath<Node, Link>> graphPaths;
+    private final List<GraphPath<Node, Link>> graphPaths;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                          Constructor                                       */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -95,7 +95,9 @@ public class GraphCanvas extends JComponent
         double screenWidth = this.getWidth(), screenHeight = this.getHeight();
         double range = Math.max(this.bounds[2] - this.bounds[0], this.bounds[3] - this.bounds[1]);
         int x = (int)((coordinate.x - bounds[0]) * screenWidth / range);
-        int y = (int)((coordinate.y - bounds[1]) * screenHeight / range);
+        int y = (int)((coordinate.y - bounds[1]) * screenHeight / range) ;
+        int yMax = (int)((bounds[3]-bounds[1]) * (screenHeight / range));
+        y = (int)(screenHeight - (y + (screenHeight - yMax)/2));
         return new Coordinate(x,y);
     }
 }
