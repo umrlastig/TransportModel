@@ -1,11 +1,7 @@
 package org.TransportModel;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.TransportModel.network.Link;
-
-import java.io.File;
-import java.io.IOException;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /** */
@@ -21,7 +17,8 @@ public class Config
     public static void setInstance(Config config) {instance = config;}
     public static TransportTimes getTransportTimes(){return instance.transportTimes;}
     public static FilePaths getFilePaths(){return instance.filePaths;}
-
+    public static int getMaxTime(){return instance.transportTimes.getMaxTime();}
+    public static int getMinTime(){return instance.transportTimes.getMinTime();}
     public static int getTransportCapacity(Link.ROUTE_TYPE routeType)
     {
         switch(routeType)

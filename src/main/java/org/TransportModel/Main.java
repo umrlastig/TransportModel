@@ -29,7 +29,7 @@ public class Main
         setupConfig();
         Area idf = setupIDFArea();
         Network tcNetwork = setupTCNetwork();
-        Network tiNetwork = setupTINetwork();
+        //Network tiNetwork = setupTINetwork();
         //Use
         displayShortestPath(tcNetwork,tcNetwork.getNode("IDFM:22015"),tcNetwork.getNode("IDFM:463025"));
         /*
@@ -54,7 +54,6 @@ public class Main
         userInterface.display(graphCanvas);
         displayShortestPath(tiNetwork,commune1Node,commune2Node);
         */
-
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
