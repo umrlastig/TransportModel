@@ -1,5 +1,6 @@
 package org.TransportModel.network;
 
+import org.TransportModel.utils.CoordinateUtils;
 import org.geotools.referencing.GeodeticCalculator;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.locationtech.jts.geom.Coordinate;
@@ -30,19 +31,7 @@ public class Network
     public Link getLink(String id){return this.links.get(id);}
     public HashMap<String,Node> getNodes(){return this.nodes;}
     public HashMap<String,Link> getLinks(){return this.links;}
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Calculates the distance in meters between two coordinates
-     * @param coordinate1 The first coordinate
-     * @param coordinate2 The second coordinate
-     * @return The distance in meters between the two coordinates */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public double calculateDistance(Coordinate coordinate1, Coordinate coordinate2)
-    {
-        GeodeticCalculator calculator = new GeodeticCalculator();
-        calculator.setStartingGeographicPoint(coordinate1.getX(), coordinate1.getY());
-        calculator.setDestinationGeographicPoint(coordinate2.getX(), coordinate2.getY());
-        return calculator.getOrthodromicDistance();
-    }
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Adds a new node
      * If the node already exists, replace  link's node linked
@@ -130,8 +119,9 @@ public class Network
     {
         Node closestNode = null;
         double shortestDistance = Double.MAX_VALUE;
-        for (Node node : this.nodes.values()) {
-            double distance = this.calculateDistance(nodeToLink.getCoordinate(), node.getCoordinate());
+        for (Node node : this.nodes.values())
+        {
+            double distance = CoordinateUtils.calculateWSG84Distance(nodeToLink.getCoordinate(), node.getCoordinate());
             if (distance < shortestDistance){
                 shortestDistance = distance;
                 closestNode = node;

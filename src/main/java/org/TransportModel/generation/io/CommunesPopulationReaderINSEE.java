@@ -1,19 +1,51 @@
 package org.TransportModel.generation.io;
 
 
-
 import org.TransportModel.generation.Area;
+import org.TransportModel.generation.Zone;
+import org.TransportModel.io.TabularFileReader;
+
+import java.nio.file.Paths;
+import java.util.List;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /** */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-public final class CommunesPopulationReaderINSEE
+public final class CommunesPopulationReaderINSEE extends TabularFileReader
 {
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static void readINSEEFILE(Area area, String filePath)
     {
-
+        readFile(Paths.get(filePath),new PopulationProcessor(area));
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    static class PopulationProcessor implements LineProcessor
+    {
+        private final Area area;
+        public PopulationProcessor(Area area){this.area = area;}
+        @Override public String[] split(String line){return line.split(",");}
+        ///////////////////////////////////////////////////////////////////////////////////////////////////
+        /** */
+        ///////////////////////////////////////////////////////////////////////////////////////////////////
+        @Override public void processLine(List<String> headers, String[] values)
+        {
+            double totalIrisPopulation = Double.parseDouble(values[headers.indexOf(HEADERS.TOTAL_POPULATION)]);
+            String codeINSEE = values[headers.indexOf(HEADERS.CODE_INSEE)];
+            Zone commune = area.getZone(codeINSEE);
+            if(commune !=  null)
+                commune.addPopulation((int)totalIrisPopulation);
+        }
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** Defines constants for the BDTOPO files */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    static class HEADERS
+    {
+        public final static String CODE_INSEE = "COM";
+        public final static String TOTAL_POPULATION = "P19_POP";
     }
 }

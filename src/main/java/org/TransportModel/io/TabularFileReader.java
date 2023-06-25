@@ -6,19 +6,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.function.Function;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/** The TabularFileReader class represents a reader for tabular files */
+/** Represents a reader for tabular files */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public abstract class TabularFileReader
 {
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** The LineProcessor interface represents an object that processes a line of data */
+    /** Represents an object that processes a line of data */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     protected interface LineProcessor
     {

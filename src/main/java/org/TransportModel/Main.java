@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.TransportModel.generation.Area;
 import org.TransportModel.generation.io.CommunesPopulationReaderINSEE;
 import org.TransportModel.generation.io.CommunesShapeReaderBDTOPO;
+import org.TransportModel.gui.GraphCanvas;
+import org.TransportModel.gui.UserInterface;
 import org.TransportModel.network.Link;
 import org.TransportModel.network.Network;
 import org.TransportModel.network.Node;
@@ -29,9 +31,9 @@ public class Main
         setupConfig();
         Area idf = setupIDFArea();
         Network tcNetwork = setupTCNetwork();
-        //Network tiNetwork = setupTINetwork();
+        Network tiNetwork = setupTINetwork();
         //Use
-        displayShortestPath(tcNetwork,tcNetwork.getNode("IDFM:22015"),tcNetwork.getNode("IDFM:463025"));
+        //displayShortestPath(tcNetwork,tcNetwork.getNode("IDFM:22015"),tcNetwork.getNode("IDFM:463025"));
         /*
         tcNetwork.addAndLinkNode(commune1Node);
         tcNetwork.addAndLinkNode(commune2Node);
@@ -47,13 +49,11 @@ public class Main
         GraphPath<Node, Link> shortestPath = shortestPathAlgorithm.getPath(commune1Node, commune2Node);
         */
         //Display
-        /*
         UserInterface userInterface = new UserInterface();
         GraphCanvas graphCanvas = new GraphCanvas(tiNetwork.createGraph());
-        graphCanvas.addPath(shortestPath);
+        //graphCanvas.addPath(shortestPath);
         userInterface.display(graphCanvas);
-        displayShortestPath(tiNetwork,commune1Node,commune2Node);
-        */
+        //displayShortestPath(tiNetwork,commune1Node,commune2Node);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
@@ -95,7 +95,7 @@ public class Main
     {
         Network tiNetwork = new Network();
         try{for(String shpFilePath:Config.getFilePaths().getNetworkFilesBDTOPO())
-                NetworkReaderBDTOPO.readBDTOPOFile(tiNetwork,shpFilePath);}
+                NetworkReaderBDTOPO.readBDTOPORouteFile(tiNetwork,shpFilePath);}
         catch(Exception e){e.printStackTrace();}
         return tiNetwork;
     }
