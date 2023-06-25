@@ -29,7 +29,7 @@ public class Main
     {
         //Setup
         setupConfig();
-        Area idf = setupIDFArea();
+        Area area = setupArea();
         Network tcNetwork = setupTCNetwork();
         Network tiNetwork = setupTINetwork();
         //Use
@@ -49,10 +49,10 @@ public class Main
         GraphPath<Node, Link> shortestPath = shortestPathAlgorithm.getPath(commune1Node, commune2Node);
         */
         //Display
-        UserInterface userInterface = new UserInterface();
-        GraphCanvas graphCanvas = new GraphCanvas(tiNetwork.createGraph());
+        //UserInterface userInterface = new UserInterface();
+        //GraphCanvas graphCanvas = new GraphCanvas(tcNetwork.createGraph());
         //graphCanvas.addPath(shortestPath);
-        userInterface.display(graphCanvas);
+        //userInterface.display(graphCanvas);
         //displayShortestPath(tiNetwork,commune1Node,commune2Node);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,15 +68,15 @@ public class Main
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private static Area setupIDFArea()
+    private static Area setupArea()
     {
-        Area idf = new Area();
+        Area area = new Area();
         try {
-            CommunesShapeReaderBDTOPO.readBDTOPOFile(idf, Config.getFilePaths().getCommunesShapeFileBDTOPO());
-            CommunesPopulationReaderINSEE.readINSEEFILE(idf,Config.getFilePaths().getCommunesPopulationFileINSEE());
+            CommunesShapeReaderBDTOPO.readBDTOPOFile(area, Config.getFilePaths().getCommunesShapeFileBDTOPO());
+            CommunesPopulationReaderINSEE.readINSEEFILE(area,Config.getFilePaths().getCommunesPopulationFileINSEE());
         }
         catch(Exception e){e.printStackTrace();}
-        return idf;
+        return area;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
@@ -100,24 +100,23 @@ public class Main
         return tiNetwork;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Displays the shortest path between two nodes in the network
+     * @param network the network in which to search for the shortest path
+     * @param fromNode the starting node
+     * @param toNode the destination node */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private static void displayShortestPath(Network network,Node fromNode, Node toNode)
     {
         DirectedWeightedMultigraph<Node, Link> graph = network.createGraph();
         DijkstraShortestPath<Node, Link> shortestPathAlgorithm = new DijkstraShortestPath<>(graph);
         GraphPath<Node, Link> shortestPath = shortestPathAlgorithm.getPath(fromNode, toNode);
-        for(Link link:shortestPath.getEdgeList())
-        {
-            System.out.print("\nEntre "+link.getFromNode().getName()+" et "+link.getToNode().getName()+"" +
-                    ": "+(int)graph.getEdgeWeight(link)+ "s en "+link.getType().name() + "("+link.getName()+")");
+        for(Link link:shortestPath.getEdgeList()) {
+            System.out.print("\nEntre "+link.getFromNode().getName()+" et "+link.getToNode().getName()+ ": ");
+            System.out.print((int)graph.getEdgeWeight(link)+ "s en "+link.getType().name() + "("+link.getName()+")");
             System.out.print("  "+link.getFromNode().getId()+" et "+link.getToNode().getId());
         }
-        int hours = (int)shortestPath.getWeight() / 3600;
-        int minutes = (int)(shortestPath.getWeight() % 3600) / 60;
-        int seconds = (int)shortestPath.getWeight() % 60;
-        System.out.println("\nTemps total en secondes entre : "+fromNode.getName()+
-                " et "+ toNode.getName()+": "+String.format("%02d:%02d:%02d", hours, minutes, seconds)+ "s ("
-                +shortestPath.getEdgeList().size()+" liens)");
+        int time = (int)shortestPath.getWeight(), linkNumber = shortestPath.getEdgeList().size();
+        System.out.print("\nTemps total entre : "+fromNode.getName()+ " et "+ toNode.getName()+": ");
+        System.out.print(String.format("%02d:%02d:%02d",time/3600,time%3600/60,time%60)+ " (" +linkNumber+" liens)");
     }
 }

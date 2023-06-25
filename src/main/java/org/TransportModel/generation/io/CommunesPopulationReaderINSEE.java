@@ -27,7 +27,7 @@ public final class CommunesPopulationReaderINSEE extends TabularFileReader
     {
         private final Area area;
         public PopulationProcessor(Area area){this.area = area;}
-        @Override public String[] split(String line){return line.split(",");}
+        @Override public String[] split(String line){return line.split(";");}
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
