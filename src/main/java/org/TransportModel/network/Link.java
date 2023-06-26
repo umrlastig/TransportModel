@@ -26,8 +26,8 @@ public class Link
         this.type = type;
         this.name = name;
     }
-    public Link(String id, Node fromNode, Node toNode, double speed, double capacity, double length,ROUTE_TYPE type)
-    {this(id,fromNode,toNode,speed,capacity,length,type,"Unnamed");}
+    public Link(String id, Node fromNode, Node toNode, String name)
+    {this(id,fromNode,toNode,9999,9999999,1,ROUTE_TYPE.FOOT,name);}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Getters/Setters */
     ///////////////////////////////////////////////////////////////////////////////////////////////////

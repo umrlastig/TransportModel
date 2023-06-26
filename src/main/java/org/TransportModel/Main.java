@@ -2,6 +2,7 @@ package org.TransportModel;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.TransportModel.generation.Area;
+import org.TransportModel.generation.Zone;
 import org.TransportModel.generation.io.CommunesPopulationReaderINSEE;
 import org.TransportModel.generation.io.CommunesShapeReaderBDTOPO;
 import org.TransportModel.gui.GraphCanvas;
@@ -12,6 +13,7 @@ import org.TransportModel.network.Node;
 import org.TransportModel.network.io.NetworkReaderBDTOPO;
 import org.TransportModel.network.io.NetworkReaderGTFS;
 import org.jgrapht.GraphPath;
+import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
 
@@ -33,26 +35,19 @@ public class Main
         Network tcNetwork = setupTCNetwork();
         Network tiNetwork = setupTINetwork();
         //Use
-        //displayShortestPath(tcNetwork,tcNetwork.getNode("IDFM:22015"),tcNetwork.getNode("IDFM:463025"));
-        /*
-        tcNetwork.addAndLinkNode(commune1Node);
-        tcNetwork.addAndLinkNode(commune2Node);
-        displayShortestPath(tcNetwork,commune1Node,commune2Node);
-        Zone commune1 = idf.getZone(""+7);
-        Zone commune2 = idf.getZone(""+219);
-        Node commune1Node = new Node(commune1.getId(),commune1.getName(),commune1.getCentroid());
-        Node commune2Node = new Node(commune2.getId(),commune2.getName(),commune2.getCentroid());
-        tiNetwork.addAndLinkNode(commune1Node);
-        tiNetwork.addAndLinkNode(commune2Node);
-        DirectedWeightedMultigraph<Node, Link> graph = tiNetwork.createGraph();
-        DijkstraShortestPath<Node, Link> shortestPathAlgorithm = new DijkstraShortestPath<>(graph);
-        GraphPath<Node, Link> shortestPath = shortestPathAlgorithm.getPath(commune1Node, commune2Node);
-        */
+        isConnected(tiNetwork);
+        //Node bobignyPabloPicasso = tcNetwork.getNode("IDFM:22015");
+        //Node berault = tcNetwork.getNode("IDFM:27881");
+        //Node placeDItalie = tcNetwork.getNode("IDFM:22365");
+        //displayShortestPath(tcNetwork,bobignyPabloPicasso,berault);
+        Zone bobigny = area.getZone("93008");
+        Zone vincenne = area.getZone("75112");
+        GraphPath<Node, Link> shortestPath = displayShortestPath(tiNetwork,bobigny,vincenne);
         //Display
-        //UserInterface userInterface = new UserInterface();
-        //GraphCanvas graphCanvas = new GraphCanvas(tcNetwork.createGraph());
-        //graphCanvas.addPath(shortestPath);
-        //userInterface.display(graphCanvas);
+        UserInterface userInterface = new UserInterface();
+        GraphCanvas graphCanvas = new GraphCanvas(tiNetwork.createGraph());
+        graphCanvas.addPath(shortestPath);
+        userInterface.display(graphCanvas);
         //displayShortestPath(tiNetwork,commune1Node,commune2Node);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,12 +95,24 @@ public class Main
         return tiNetwork;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Displays the shortest path between two nodes in the network
-     * @param network the network in which to search for the shortest path
-     * @param fromNode the starting node
-     * @param toNode the destination node */
+    /** @return y*/
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private static void displayShortestPath(Network network,Node fromNode, Node toNode)
+    private static GraphPath<Node, Link> displayShortestPath(Network network, Zone zone1, Zone zone2)
+    {
+        Node node1 = new Node(zone1.getId(),zone1.getName(),zone1.getCentroid());
+        Node node2 = new Node(zone2.getId(),zone2.getName(),zone2.getCentroid());
+        network.addAndLinkNode(node1);
+        network.addAndLinkNode(node2);
+        return displayShortestPath(network,node1,node2);
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** Displays the shortest path between two nodes in the network
+     * @param network  the network in which to search for the shortest path
+     * @param fromNode the starting node
+     * @param toNode   the destination node
+     * @return y*/
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    private static GraphPath<Node,Link> displayShortestPath(Network network, Node fromNode, Node toNode)
     {
         DirectedWeightedMultigraph<Node, Link> graph = network.createGraph();
         DijkstraShortestPath<Node, Link> shortestPathAlgorithm = new DijkstraShortestPath<>(graph);
@@ -113,10 +120,20 @@ public class Main
         for(Link link:shortestPath.getEdgeList()) {
             System.out.print("\nEntre "+link.getFromNode().getName()+" et "+link.getToNode().getName()+ ": ");
             System.out.print((int)graph.getEdgeWeight(link)+ "s en "+link.getType().name() + "("+link.getName()+")");
-            System.out.print("  "+link.getFromNode().getId()+" et "+link.getToNode().getId());
+            //System.out.print("  "+link.getFromNode().getId()+" et "+link.getToNode().getId());
         }
         int time = (int)shortestPath.getWeight(), linkNumber = shortestPath.getEdgeList().size();
         System.out.print("\nTemps total entre : "+fromNode.getName()+ " et "+ toNode.getName()+": ");
         System.out.print(String.format("%02d:%02d:%02d",time/3600,time%3600/60,time%60)+ " (" +linkNumber+" liens)");
+        return shortestPath;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    private static void isConnected(Network network)
+    {
+        DirectedWeightedMultigraph<Node,Link> graph = network.createGraph();
+        KosarajuStrongConnectivityInspector<Node,Link> connectivityInspector = new KosarajuStrongConnectivityInspector<>(graph);
+        System.out.println(connectivityInspector.isStronglyConnected()+ ": "+connectivityInspector.stronglyConnectedSets().size());
     }
 }

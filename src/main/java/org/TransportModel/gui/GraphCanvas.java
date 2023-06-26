@@ -52,21 +52,20 @@ public class GraphCanvas extends JComponent
     @Override
     public void paintComponent(Graphics g)
     {
-        if (this.graph != null && this.bounds[0]!=null) {
-            this.drawNodes(g);
-            this.drawEdges(g);
-        }
+        this.drawNodes(g);
+        this.drawEdges(g);
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////
     /**                                     Dessine les noeuds                                      */
     //////////////////////////////////////////////////////////////////////////////////////////////////
     private void drawNodes(Graphics g)
     {
+
         g.setColor(Color.BLUE);
         for(Node node: this.graph.vertexSet())
         {
             Coordinate coordinate = this.getScaledCoordinate(node.getCoordinate());
-            g.fillOval((int)coordinate.x,(int)coordinate.y,2,2);
+            g.fillOval((int)coordinate.x,(int)coordinate.y,4,4);
         }
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////

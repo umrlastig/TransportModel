@@ -127,10 +127,11 @@ public class Network
                 closestNode = node;
             }
         }
+        String name = "centroidLink";
         String directLinkId = nodeToLink.getId() + ":" + closestNode.getId();
         String inverseLinkId = closestNode.getId() + ":" + nodeToLink.getId();
-        Link direct = new Link(directLinkId, closestNode, nodeToLink, 100000, 100000, 1, Link.ROUTE_TYPE.FOOT);
-        Link inverse = new Link(inverseLinkId, nodeToLink, closestNode, 100000, 100000, 1, Link.ROUTE_TYPE.FOOT);
+        Link direct = new Link(directLinkId, closestNode, nodeToLink,name);
+        Link inverse = new Link(inverseLinkId, nodeToLink, closestNode,name);
         this.addNode(nodeToLink);
         this.addLink(direct);
         this.addLink(inverse);
