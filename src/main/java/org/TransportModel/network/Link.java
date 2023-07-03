@@ -4,14 +4,12 @@ package org.TransportModel.network;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public class Link
 {
-    //Essentials
+    public enum ROUTE_TYPE {TRAM_OR_LIGHT_SUBWAY, TRAIN, BUS, SUBWAY, UNDEFINED, FOOT, ROAD}
     String id;
     ROUTE_TYPE type;
     String name;
     private Node fromNode, toNode;
-    //Optional
-    private double lengthInM, normalSpeedInMS, capacityPerHour;
-    public enum ROUTE_TYPE {TRAM_OR_LIGHT_SUBWAY, TRAIN, BUS, SUBWAY, UNDEFINED, FOOT, CAR;}
+    private final double lengthInM, normalSpeedInMS, capacityPerHour;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Constructor */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26,6 +24,8 @@ public class Link
         this.type = type;
         this.name = name;
     }
+    public Link(Node fromNode, Node toNode, double speed, double capacity, double length,ROUTE_TYPE type, String name)
+    {this(fromNode.getId()+":"+toNode.getId(),fromNode,toNode,speed,capacity,length,type,name);}
     public Link(String id, Node fromNode, Node toNode, String name)
     {this(id,fromNode,toNode,9999,9999999,1,ROUTE_TYPE.FOOT,name);}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33,12 +33,9 @@ public class Link
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public double getNormalSpeedInMS(){return this.normalSpeedInMS;}
     public double getLengthInM(){return this.lengthInM;}
-    public double getCapacityPerHour(){return this.capacityPerHour;}
+    @SuppressWarnings("unused") public double getCapacityPerHour(){return this.capacityPerHour;}
     public Node getFromNode(){return this.fromNode;}
     public Node getToNode(){return this.toNode;}
-    public void setNormalSpeedInMS(double speed){this.normalSpeedInMS = speed;}
-    public void setLengthInM(double length){this.lengthInM = length;}
-    public void setCapacityPerHour(double capacityPerHour){this.capacityPerHour = capacityPerHour;}
     public void setFromNode(Node node){this.fromNode = node;}
     public void setToNode(Node node){this.toNode = node;}
     public String getId(){return this.id;}

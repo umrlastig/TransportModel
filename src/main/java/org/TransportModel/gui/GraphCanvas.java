@@ -12,29 +12,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/**                        Représentation graphique d'un réseau                                  */
+/** */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-public class GraphCanvas extends JComponent
+@SuppressWarnings("unused") public class GraphCanvas extends JComponent
 {
     private Double[] bounds;
-    private Graph<Node,Link> graph;
+    private final Graph<Node,Link> graph;
     private final List<GraphPath<Node, Link>> graphPaths;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                                          Constructor                                       */
+    /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public GraphCanvas(Graph<Node,Link> graph)
     {
+        this.graphPaths = new ArrayList<>();
         this.graph = graph;
         this.setupBounds();
-        this.graphPaths = new ArrayList<>();
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                                          Modificateurs                                       */
+    /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void setGraph(Graph<Node,Link> graph) {this.graph = graph;this.setupBounds();}
-    public void addPath(GraphPath<Node, Link> graphPath) {this.graphPaths.add(graphPath);}
+    @SuppressWarnings("unused") public void addPath(GraphPath<Node, Link> graphPath) {this.graphPaths.add(graphPath);}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                  Calcul les limites de coordonnés pour la mise à l'échelle                   */
+    /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private void setupBounds()
     {
@@ -47,48 +46,30 @@ public class GraphCanvas extends JComponent
         }
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                                   PaintComponent                                             */
+    /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     @Override
     public void paintComponent(Graphics g)
     {
-        this.drawNodes(g);
-        this.drawEdges(g);
-    }
-    //////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                                     Dessine les noeuds                                      */
-    //////////////////////////////////////////////////////////////////////////////////////////////////
-    private void drawNodes(Graphics g)
-    {
-
-        g.setColor(Color.BLUE);
-        for(Node node: this.graph.vertexSet())
-        {
-            Coordinate coordinate = this.getScaledCoordinate(node.getCoordinate());
-            g.fillOval((int)coordinate.x,(int)coordinate.y,4,4);
-        }
-    }
-    //////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                                     Dessine les arcs                                        */
-    //////////////////////////////////////////////////////////////////////////////////////////////////
-    private void drawEdges(Graphics g)
-    {
+        //Graph
         g.setColor(Color.red);
-        for (Link link : this.graph.edgeSet())
-        {
+        for (Link link : this.graph.edgeSet()) {
             Coordinate from = this.getScaledCoordinate(link.getFromNode().getCoordinate());
             Coordinate to = this.getScaledCoordinate(link.getToNode().getCoordinate());
             g.drawLine((int)from.x, (int)from.y, (int)to.x, (int)to.y);
         }
+        //Paths
         g.setColor(Color.green);
         for(GraphPath<Node,Link> graphPath:this.graphPaths)
-            for (Link link : graphPath.getEdgeList())
-            {
+            for (Link link : graphPath.getEdgeList()) {
                 Coordinate from = this.getScaledCoordinate(link.getFromNode().getCoordinate());
                 Coordinate to = this.getScaledCoordinate(link.getToNode().getCoordinate());
                 g.drawLine((int)from.x, (int)from.y, (int)to.x, (int)to.y);
             }
     }
+    //////////////////////////////////////////////////////////////////////////////////////////////////
+    /** */
+    //////////////////////////////////////////////////////////////////////////////////////////////////
     public Coordinate getScaledCoordinate(Coordinate coordinate)
     {
         double screenWidth = this.getWidth(), screenHeight = this.getHeight();

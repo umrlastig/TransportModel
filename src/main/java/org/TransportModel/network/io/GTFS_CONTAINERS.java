@@ -109,7 +109,7 @@ public class GTFS_CONTAINERS
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         public int getAverageFrequency(){return (this.lastTraversal-this.firstTraversal)/this.traversalCount;}
         public int getAverageTraversalTime() {return this.averageTraversalTime;}
-        public int getMaxTraversalTime() {return maxTraversalTime;}
+
         public int getFirstTraversal(){return this.firstTraversal;}
         public int getLastTraversal(){return this.lastTraversal;}
         public String getFromId(){return this.fromId;}

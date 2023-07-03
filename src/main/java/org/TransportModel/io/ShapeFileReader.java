@@ -1,10 +1,10 @@
 package org.TransportModel.io;
 
-
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.type.PropertyDescriptor;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -15,16 +15,25 @@ import java.nio.file.Path;
 public abstract class ShapeFileReader
 {
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**  */
+    /** This interface defines methods for processing features */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    protected interface FeatureProcessor {void processFeature(SimpleFeature feature)throws Exception;}
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Represents a reader for shape files */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    protected static void readFile(Path filePath, FeatureProcessor featureProcessor)
+    public interface FeatureProcessor
     {
-        try
-        {
+        ///////////////////////////////////////////////////////////////////////////////////////////////////
+        /** Processes a feature
+         * @param feature the feature to processes
+         * @throws Exception if an error occurs during the processing of the feature */
+        ///////////////////////////////////////////////////////////////////////////////////////////////////
+        void processFeature(SimpleFeature feature) throws Exception;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** Reads a shp file and processes each feature using the provided featureProcessor
+     * @param filePath the path to the file to be read
+     * @param featureProcessor the featureProcessor object that processes each feature */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public static void readFile(Path filePath, FeatureProcessor featureProcessor)
+    {
+        try {
             ShapefileDataStore dataStore = new ShapefileDataStore(filePath.toUri().toURL());
             SimpleFeatureSource featureSource = dataStore.getFeatureSource(dataStore.getTypeNames()[0]);
             dataStore.dispose();
@@ -36,5 +45,20 @@ public abstract class ShapeFileReader
             catch (Exception e) {e.printStackTrace();}
         }
         catch(IOException e){throw new RuntimeException();}
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** Displays the attributes of a given SimpleFeature
+     * @param feature the SimpleFeature whose attributes are to be displayed */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    @SuppressWarnings("unused") public static void displayFeatureAttributes(SimpleFeature feature)
+    {
+        PropertyDescriptor[] descriptors = feature.getFeatureType().getDescriptors().toArray(new PropertyDescriptor[0]);
+        System.out.println("---------------------");
+        for (PropertyDescriptor propertyDescriptor : descriptors) {
+            String name = propertyDescriptor.getName().getLocalPart();
+            Object value = feature.getAttribute(name);
+            String type = propertyDescriptor.getType().getBinding().getSimpleName();
+            System.out.println("Attribute : " + name+", "+ type+", "+ value);
+        }
     }
 }

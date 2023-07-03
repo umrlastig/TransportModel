@@ -2,7 +2,9 @@ package org.TransportModel.network;
 
 import org.locationtech.jts.geom.Coordinate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /** Represents a node in the transportation network */
@@ -11,7 +13,7 @@ public class Node
 {
     final private String id;
     private final String name;
-    private Coordinate coordinate;
+    private final Coordinate coordinate;
     final HashMap<String,Link> inLinks;
     final HashMap<String,Link> outLinks;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,17 +27,16 @@ public class Node
         this.inLinks = new HashMap<>();
         this.outLinks = new HashMap<>();
     }
-    public Node(String id, Coordinate coordinate)
-    {this(id,"Unnamed",coordinate);}
+    public Node(String id, Coordinate coordinate) {this(id,"Unnamed",coordinate);}
+    public Node(Coordinate coordinate) {this(coordinate.x+":"+coordinate.y,coordinate);}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Getters/Setters */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public Coordinate getCoordinate(){return this.coordinate;}
     public String getName(){return this.name;}
     public String getId(){return this.id;}
-    public HashMap<String,Link> getInLinks(){return this.inLinks;}
-    public HashMap<String,Link> getOutLinks(){return this.outLinks;}
+    public List<Link> getInLinks(){return new ArrayList<>(this.inLinks.values());}
+    public List<Link> getOutLinks(){return new ArrayList<>(this.outLinks.values());}
     public void addInLink(Link link){this.inLinks.put(link.getId(),link);}
     public void addOutLink(Link link){this.outLinks.put(link.getId(),link);}
-    public void setCoordinate(Coordinate coordinate){this.coordinate = coordinate;}
 }

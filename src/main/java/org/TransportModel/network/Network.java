@@ -1,9 +1,8 @@
 package org.TransportModel.network;
 
-import org.TransportModel.utils.CoordinateUtils;
-import org.geotools.referencing.GeodeticCalculator;
+import org.jgrapht.GraphPath;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
-import org.locationtech.jts.geom.Coordinate;
 
 import java.util.HashMap;
 
@@ -26,33 +25,18 @@ public class Network
     /** Getters/Setters */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public boolean containsNode(String id){return this.nodes.containsKey(id);}
-    public boolean containsLink(String id){return this.nodes.containsKey(id);}
     public Node getNode(String id){return this.nodes.get(id);}
-    public Link getLink(String id){return this.links.get(id);}
-    public HashMap<String,Node> getNodes(){return this.nodes;}
-    public HashMap<String,Link> getLinks(){return this.links;}
-
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Adds a new node
-     * If the node already exists, replace  link's node linked
+    /** Adds a new node. If the node already exists, replace  link's node linked
      * @param node The Node to add */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public void addNode(Node node)
     {
         //If Node already exist, replace it in every link
-        if(this.containsNode(node.getId()))
-        {
-            for(Link inLink:this.nodes.get(node.getId()).getInLinks().values())
-            {
-                node.addInLink(inLink);
-                inLink.setToNode(node);
-            }
-            for(Link outLink:this.nodes.get(node.getId()).getOutLinks().values())
-            {
-                node.addOutLink(outLink);
-                outLink.setFromNode(node);
-            }
-        }
+        Node existingNode = this.nodes.get(node.getId());
+        if (existingNode != null) {
+            existingNode.getInLinks().forEach(inLink -> {node.addInLink(inLink); inLink.setToNode(node);});
+            existingNode.getOutLinks().forEach(outLink -> {node.addOutLink(outLink); outLink.setFromNode(node);});}
         this.nodes.put(node.getId(),node);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,13 +61,13 @@ public class Network
     /** Removes the node and all associated links from the network
      * @param id The ID of the node to be removed */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void removeNode(String id)
+    @SuppressWarnings("unused") public void removeNode(String id)
     {
         Node node = this.nodes.remove(id);
-        for(String linkId:node.getInLinks().keySet())
-            this.removeLink(linkId);
-        for(String linkId:node.getOutLinks().keySet())
-            this.removeLink(linkId);
+        for(Link inLink:node.getInLinks())
+            this.removeLink(inLink.getId());
+        for(Link outLink:node.getOutLinks())
+            this.removeLink(outLink.getId());
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Removes the link with the specified ID from the network
@@ -112,28 +96,12 @@ public class Network
         return graph;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Add a node and link it to the shortest node
-     * @param nodeToLink The node to link */
+    /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void addAndLinkNode(Node nodeToLink)
+    @SuppressWarnings("unused") public GraphPath<Node,Link> getShortestPath(String fromNodeId, String toNodeId)
     {
-        Node closestNode = null;
-        double shortestDistance = Double.MAX_VALUE;
-        for (Node node : this.nodes.values())
-        {
-            double distance = CoordinateUtils.calculateWSG84Distance(nodeToLink.getCoordinate(), node.getCoordinate());
-            if (distance < shortestDistance){
-                shortestDistance = distance;
-                closestNode = node;
-            }
-        }
-        String name = "centroidLink";
-        String directLinkId = nodeToLink.getId() + ":" + closestNode.getId();
-        String inverseLinkId = closestNode.getId() + ":" + nodeToLink.getId();
-        Link direct = new Link(directLinkId, closestNode, nodeToLink,name);
-        Link inverse = new Link(inverseLinkId, nodeToLink, closestNode,name);
-        this.addNode(nodeToLink);
-        this.addLink(direct);
-        this.addLink(inverse);
+        DirectedWeightedMultigraph<Node, Link> graph = this.createGraph();
+        DijkstraShortestPath<Node, Link> shortestPathAlgorithm = new DijkstraShortestPath<>(graph);
+        return shortestPathAlgorithm.getPath(nodes.get(fromNodeId), nodes.get(toNodeId));
     }
 }

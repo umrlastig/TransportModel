@@ -16,9 +16,9 @@ import java.util.List;
 public abstract class TabularFileReader
 {
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Represents an object that processes a line of data */
+    /** This interface defines methods for processing lines of data */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    protected interface LineProcessor
+    public interface LineProcessor
     {
         String[] split(String line);
         ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32,10 +32,9 @@ public abstract class TabularFileReader
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Reads a file line by line and processes each line using the provided LineProcessor
      * @param filePath the path to the file to be read
-     * @param lineProcessor the LineProcessor object that processes each line
-     * @throws RuntimeException if an I/O error occurs while reading the file */
+     * @param lineProcessor the LineProcessor object that processes each line */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    protected static void readFile(Path filePath, LineProcessor lineProcessor)
+    public static void readFile(Path filePath, LineProcessor lineProcessor)
     {
         try (BufferedReader reader = Files.newBufferedReader(filePath))
         {
@@ -44,9 +43,8 @@ public abstract class TabularFileReader
             while ((dataLine = reader.readLine()) != null)
             {
                 String[] values = lineProcessor.split(dataLine);
-                if(values.length == headers.size())
-                    try{lineProcessor.processLine(headers,values);}
-                    catch(Exception e){e.printStackTrace();}
+                assert(values.length == headers.size());
+                try{lineProcessor.processLine(headers,values);} catch(Exception e){e.printStackTrace();}
             }
         }
         catch (IOException e){throw new RuntimeException(e);}
@@ -56,7 +54,7 @@ public abstract class TabularFileReader
      * @param filePath The path to write the file
      * @param lines A list of hashMap<Header,Value> representing each line of the file */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    protected static void writeFile(String delimiter, Path filePath, List<HashMap<String, String>> lines)
+    public static void writeFile(String delimiter, Path filePath, List<HashMap<String, String>> lines)
     {
         String[] headers = lines.get(0).keySet().toArray(new String[0]);
         String[] values = new String[headers.length];
