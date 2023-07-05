@@ -4,7 +4,9 @@ import org.jgrapht.GraphPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /** Represents a transportation network */
@@ -26,6 +28,8 @@ public class Network
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public boolean containsNode(String id){return this.nodes.containsKey(id);}
     public Node getNode(String id){return this.nodes.get(id);}
+    public List<Node> getNodes(){return new ArrayList<>(this.nodes.values());}
+    public List<Link> getLinks(){return new ArrayList<>(this.links.values());}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Adds a new node. If the node already exists, replace  link's node linked
      * @param node The Node to add */

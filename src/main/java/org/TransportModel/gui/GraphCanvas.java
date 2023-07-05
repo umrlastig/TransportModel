@@ -17,33 +17,36 @@ import java.util.List;
 @SuppressWarnings("unused") public class GraphCanvas extends JComponent
 {
     private Double[] bounds;
-    private final Graph<Node,Link> graph;
+    private int graphIndex;
+    private final List<Graph<Node,Link>> graphs;
     private final List<GraphPath<Node, Link>> graphPaths;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public GraphCanvas(Graph<Node,Link> graph)
+    public GraphCanvas()
     {
+        this.graphIndex = 0;
         this.graphPaths = new ArrayList<>();
-        this.graph = graph;
-        this.setupBounds();
+        this.graphs = new ArrayList<>();
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     @SuppressWarnings("unused") public void addPath(GraphPath<Node, Link> graphPath) {this.graphPaths.add(graphPath);}
+    @SuppressWarnings("unused") public void addGraph(Graph<Node, Link> graph) {this.graphs.add(graph);this.setupBounds();}
+    public void nextIndex(){this.graphIndex++; if(this.graphIndex>=this.graphs.size())this.graphIndex=0;}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private void setupBounds()
     {
         this.bounds = new Double[]{null, null, null, null};
-        for (Node node : this.graph.vertexSet()) {
+        for(Graph<Node,Link> graph:graphs)
+            for (Node node : graph.vertexSet()) {
             bounds[0] = (bounds[0] == null || bounds[0] > node.getCoordinate().x) ? node.getCoordinate().x : bounds[0];
             bounds[1] = (bounds[1] == null || bounds[1] > node.getCoordinate().y) ? node.getCoordinate().y : bounds[1];
             bounds[2] = (bounds[2] == null || bounds[2] < node.getCoordinate().x) ? node.getCoordinate().x : bounds[2];
-            bounds[3] = (bounds[3] == null || bounds[3] < node.getCoordinate().y) ? node.getCoordinate().y : bounds[3];
-        }
+            bounds[3] = (bounds[3] == null || bounds[3] < node.getCoordinate().y) ? node.getCoordinate().y : bounds[3];}
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
@@ -53,7 +56,7 @@ import java.util.List;
     {
         //Graph
         g.setColor(Color.red);
-        for (Link link : this.graph.edgeSet()) {
+        for (Link link : this.graphs.get(this.graphIndex).edgeSet()) {
             Coordinate from = this.getScaledCoordinate(link.getFromNode().getCoordinate());
             Coordinate to = this.getScaledCoordinate(link.getToNode().getCoordinate());
             g.drawLine((int)from.x, (int)from.y, (int)to.x, (int)to.y);

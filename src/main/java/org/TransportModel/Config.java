@@ -76,8 +76,10 @@ import java.io.IOException;
         @SuppressWarnings("unused") @JsonProperty("networkFolderGTFS") private String networkFolderGTFS;
         @SuppressWarnings("unused") @JsonProperty("networkFilesBDTOPO") private String[] networkFilesBDTOPO;
         @SuppressWarnings("unused") @JsonProperty("communesShapeFileBDTOPO") private String communesShapeFileBDTOPO;
-        @SuppressWarnings("unused") @JsonProperty("communesPopulationFileINSEE") private String communesPopulationFileINSEE;
-        @SuppressWarnings("unused") @JsonProperty("communesFlowFileMOBPRO") private String communesFlowFileMOBPRO;
+        @SuppressWarnings("unused") @JsonProperty("communesPopulationFileINSEE") private String communesPopulationAndWorkersFileINSEE;
+        @SuppressWarnings("unused") @JsonProperty("communesStudentsFileINSEE") private String communesStudentsFileINSEE;
+        @SuppressWarnings("unused") @JsonProperty("communesWorkFlowsFileINSEE") private String communesWorkFlowsFileINSEE;
+        @SuppressWarnings("unused") @JsonProperty("communesStudentFlowsFileINSEE") private String communesStudentFlowsFileINSEE;
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -85,7 +87,10 @@ import java.io.IOException;
         public String getNetworkFolderGTFS(){return this.networkFolderGTFS;}
         public String[] getNetworkFilesBDTOPO(){return this.networkFilesBDTOPO;}
         public String getCommunesShapeFileBDTOPO(){return this.communesShapeFileBDTOPO;}
-        public String getCommunesPopulationFileINSEE(){return this.communesPopulationFileINSEE;}
-        public String getCommunesFlowFileMOBPRO(){return this.communesFlowFileMOBPRO;}
+        public String getCommunesPopulationAndWorkersFileINSEE(){return this.communesPopulationAndWorkersFileINSEE;}
+        public String getCommunesStudentsFileINSEE(){return this.communesStudentsFileINSEE;}
+        public String getCommunesWorkFlowsFileINSEE(){return this.communesWorkFlowsFileINSEE;}
+        public String getCommunesStudentFlowsFileINSEE(){return this.communesStudentFlowsFileINSEE;}
+
     }
 }

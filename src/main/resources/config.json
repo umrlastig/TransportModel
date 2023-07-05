@@ -1,0 +1,31 @@
+{
+  "transportTimes": {
+    "minTime": 6 ,
+    "maxTime": 22
+  },
+  "transportCapacities": {
+    "tram_or_light_subway": 50,
+    "train": 200,
+    "bus": 300,
+    "subway": 500,
+    "default": 100
+  },
+  "filePaths": {
+    "networkFolderGTFS": "src/main/resources/TC/GTFS_IDF",
+    "networkFilesBDTOPO": [
+      "src/main/resources/TI/BDTOPO_75/TRONCON_DE_ROUTE.shp",
+      "src/main/resources/TI/BDTOPO_77/TRONCON_DE_ROUTE.shp",
+      "src/main/resources/TI/BDTOPO_78/TRONCON_DE_ROUTE.shp",
+      "src/main/resources/TI/BDTOPO_91/TRONCON_DE_ROUTE.shp",
+      "src/main/resources/TI/BDTOPO_92/TRONCON_DE_ROUTE.shp",
+      "src/main/resources/TI/BDTOPO_93/TRONCON_DE_ROUTE.shp",
+      "src/main/resources/TI/BDTOPO_94/TRONCON_DE_ROUTE.shp",
+      "src/main/resources/TI/BDTOPO_95/TRONCON_DE_ROUTE.shp"
+    ],
+    "communesShapeFileBDTOPO": "src/main/resources/Zone/BDTOPO_IDF/communes.shp",
+    "communesPopulationAndWorkersFileINSEE": "src/main/resources/Zone/INSEE_FRANCE/pop-2019.CSV",
+    "communesStudentsFileINSEE": "src/main/resources/Zone/INSEE_FRANCE/base-ic-diplomes-formation-2019.CSV",
+    "communesWorkFlowsFileINSEE": "src/main/resources/Zone/INSEE_FRANCE/FD_MOBPRO_2019.csv",
+    "communesStudentFlowsFileINSEE": "src/main/resources/Zone/INSEE_FRANCE/base-flux-mobilite-domicile-lieu-etude-2019.csv"
+  }
+}

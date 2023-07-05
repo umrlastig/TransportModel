@@ -3,14 +3,14 @@ package org.TransportModel.gui;
 import javax.swing.*;
 import java.awt.*;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/**          Affiche un NetworkCanvas et permet de définir ses paramètres                        */
+/**  */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public class UserInterface extends JFrame
 {
     private final JPanel graphContainer;
     private final JPanel buttonsContainer;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                                        Constructeur                                          */
+    /** Constructor */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public UserInterface()
     {
@@ -22,16 +22,19 @@ public class UserInterface extends JFrame
         this.setSize(new Dimension(1000,800));
         this.setVisible(true);
     }
+    public void addButton(JButton button) {this.buttonsContainer.add(button);}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**                      Initialise le JPanel qui va contenir le Graph                          */
+    /**  */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private void setupGraphContainer()
     {
         this.graphContainer.setBackground(Color.black);
         this.getContentPane().add(graphContainer, BorderLayout.CENTER);
+        this.revalidate();
+        this.repaint();
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**              Initialise le JPanel qui va contenir les boutons d'option                       */
+    /**  */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private void setupButtonsContainer()
     {
@@ -39,7 +42,7 @@ public class UserInterface extends JFrame
         this.getContentPane().add(buttonsContainer, BorderLayout.SOUTH);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**              Initialise le JPanel qui va contenir les boutons d'option                       */
+    /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public void display(JComponent component)
     {
@@ -48,4 +51,5 @@ public class UserInterface extends JFrame
         this.revalidate();
         this.repaint();
     }
+
 }

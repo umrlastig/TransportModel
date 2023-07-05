@@ -9,8 +9,9 @@ import java.util.List;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public class Area
 {
-    double[][] flowsTC;
-    double[][] flowsTI;
+    double[][] studentFlows;
+    double[][] workFlowsTC;
+    double[][] workFlowsTI;
     HashMap<String,Zone> zones;
     HashMap<String,Integer> zonesIndex;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,9 +26,9 @@ public class Area
     /** Getters/Setters */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     @SuppressWarnings("unused")
-    public double getFlowTC(String fromID, String toID) {return this.flowsTC[zonesIndex.get(fromID)][zonesIndex.get(toID)];}
+    public double getWorkFlowTC(String fromID, String toID) {return this.workFlowsTC[zonesIndex.get(fromID)][zonesIndex.get(toID)];}
     @SuppressWarnings("unused")
-    public double getFlowTI(String fromID, String toID) {return this.flowsTI[zonesIndex.get(fromID)][zonesIndex.get(toID)];}
+    public double getWorkFlowTI(String fromID, String toID) {return this.workFlowsTI[zonesIndex.get(fromID)][zonesIndex.get(toID)];}
     public List<Zone> getZones(){return new ArrayList<>(this.zones.values());}
     public Zone getZone(String id){return this.zones.get(id);}
     public boolean containsZone(String id){return this.zones.containsKey(id);}
@@ -39,19 +40,28 @@ public class Area
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**  */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void addFlowTC(String fromId, String toId, double weighting)
+    public void addWorkFlowTC(String fromId, String toId, double weighting)
     {
-        if(this.flowsTC == null)
-            this.flowsTC = new double[zonesIndex.size()+1][zonesIndex.size()+1];
-        this.flowsTC[zonesIndex.get(fromId)][zonesIndex.get(toId)] += weighting;
+        if(this.workFlowsTC == null)
+            this.workFlowsTC = new double[zonesIndex.size()+1][zonesIndex.size()+1];
+        this.workFlowsTC[zonesIndex.get(fromId)][zonesIndex.get(toId)] += weighting;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**  */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void addFlowTI(String fromId, String toId, double weighting)
+    public void addWorkFlowTI(String fromId, String toId, double weighting)
     {
-        if(this.flowsTI == null)
-            this.flowsTI = new double[zonesIndex.size()+1][zonesIndex.size()+1];
-        this.flowsTI[zonesIndex.get(fromId)][zonesIndex.get(toId)] += weighting;
+        if(this.workFlowsTI == null)
+            this.workFlowsTI = new double[zonesIndex.size()+1][zonesIndex.size()+1];
+        this.workFlowsTI[zonesIndex.get(fromId)][zonesIndex.get(toId)] += weighting;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /**  */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public void addStudentFlow(String fromId, String toId, double weighting)
+    {
+        if(this.studentFlows == null)
+            this.studentFlows = new double[zonesIndex.size()+1][zonesIndex.size()+1];
+        this.studentFlows[zonesIndex.get(fromId)][zonesIndex.get(toId)]+=weighting;
     }
 }

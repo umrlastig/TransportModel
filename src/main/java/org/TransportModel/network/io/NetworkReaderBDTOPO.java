@@ -45,6 +45,7 @@ public final class NetworkReaderBDTOPO
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         @Override public void processFeature(SimpleFeature feature) throws Exception
         {
+            ShapeFileReader.displayFeatureAttributes(feature);
             //File values
             MultiLineString multiLineString = (MultiLineString) feature.getDefaultGeometry();
             String imp = (String) feature.getAttribute(IMPORTANCE);
@@ -55,7 +56,8 @@ public final class NetworkReaderBDTOPO
             Integer lanesNbr = (Integer) feature.getAttribute(LANES_NBR);
             Integer speedInKMH = (Integer) feature.getAttribute(SPEED);
             //If valid road, create links and nodes and add them to network
-            if (!imp.equals("6") && !imp.isEmpty() && condition.equals(USED) && access.equals(FREE) && lanesNbr != null)
+            boolean importanceOk = (imp.equals("1")||imp.equals("2")||imp.equals("3")||imp.equals("4"));
+            if (importanceOk && condition.equals(USED) && access.equals(FREE) && lanesNbr != null)
                 for (int i = 0; i < multiLineString.getNumGeometries(); i++)
                     createRoadLinks((LineString)multiLineString.getGeometryN(i),nature,direction,speedInKMH,lanesNbr);
         }
