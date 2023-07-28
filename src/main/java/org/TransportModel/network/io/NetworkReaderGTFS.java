@@ -4,9 +4,7 @@ import org.TransportModel.Config;
 import org.TransportModel.io.TabularFileUtil;
 import org.TransportModel.network.io.GTFS_CONTAINERS.*;
 import org.TransportModel.network.Link.ROUTE_TYPE;
-import org.TransportModel.network.Link;
-import org.TransportModel.network.Network;
-import org.TransportModel.network.Node;
+import org.TransportModel.network.*;
 import org.TransportModel.utils.CoordinateUtils;
 import org.locationtech.jts.geom.Coordinate;
 
@@ -16,13 +14,13 @@ import java.nio.file.Paths;
 import java.util.*;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/** Reads GTFS folder to fill a network */
+/** Reads GTFS files to create a network */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public final class NetworkReaderGTFS
 {
     private NetworkReaderGTFS(){}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Reads a GTFS folder and fill the network with data */
+    /** Create a network with GTFS files*/
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static Network readFiles()
     {
@@ -34,7 +32,8 @@ public final class NetworkReaderGTFS
         return network;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Create a network which contains a Node object for each Stop
+     * @return the network created */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private static Network readStopFile()
     {
@@ -60,7 +59,8 @@ public final class NetworkReaderGTFS
         return network;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Add a link to the network for each section
+     * @param network the network to add the links to */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private static void readSectionsFile(Network network)
     {
@@ -90,7 +90,8 @@ public final class NetworkReaderGTFS
         });
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Add a link to the network for each transfer
+     * @param network the network to add the links to */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private static void readTransfersFile(Network network)
     {
@@ -114,7 +115,8 @@ public final class NetworkReaderGTFS
         });
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Add a link to the network for each pathway
+     * @param network the network to add the links to */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private static void readPathwaysFile(Network network)
     {
@@ -140,14 +142,15 @@ public final class NetworkReaderGTFS
         });
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Store data of each route in a Route object (routeId, routeName, routeType)
+     * @return all the route <routeId,route> */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private static HashMap<String, Route> readRouteFile()
+    private static HashMap<String,Route> readRouteFile()
     {
         final String ID = "route_id",TYPE = "route_type", NAME = "route_long_name";
         Path filePath = Paths.get(Config.getInstance().networkFiles.gtfs.routes);
-        HashMap<String, Route> routes = new HashMap<>();
-        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(headers, values) -> {
+        HashMap<String,Route> routes = new HashMap<>();
+        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(headers,values) -> {
             //File values
             String routeName = values[headers.indexOf(NAME)];
             String routeId = values[headers.indexOf(ID)];
@@ -158,13 +161,15 @@ public final class NetworkReaderGTFS
         return routes;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Store data of each trip in a Trip object. A trip object contains for all the trip's stop the arrival time,
+     * the stop id and the stop sequence
+     * @return all the trips <tripId,trip> */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static HashMap<String, Trip> readTimeFile()
+    public static HashMap<String,Trip> readTimeFile()
     {
         final  String TRIP_ID = "trip_id", ARRIVAL_TIME = "arrival_time", STOP_ID = "stop_id",SEQUENCE = "stop_sequence";
         Path filePath = Paths.get(Config.getInstance().networkFiles.gtfs.stopTimes);
-        HashMap<String, Trip> trips = new HashMap<>();
+        HashMap<String,Trip> trips = new HashMap<>();
         TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(headers, values) -> {
             //File values
             String[] t = values[headers.indexOf(ARRIVAL_TIME)].split(":");
@@ -179,9 +184,12 @@ public final class NetworkReaderGTFS
         return trips;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Associate each route with all its trips
+     * @param routes all the routes <routeId,route>
+     * @param trips all the trips <tripId,trip>
+     * @return route-trips map <route,List<trip>>*/
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static HashMap<Route,List<Trip>> readTripFile(HashMap<String, Route> routes, HashMap<String, Trip> trips)
+    public static HashMap<Route,List<Trip>> readTripFile(HashMap<String,Route> routes, HashMap<String,Trip> trips)
     {
         final String ROUTE_ID = "route_id", ID = "trip_id";
         Path filePath = Paths.get(Config.getInstance().networkFiles.gtfs.trips);
@@ -195,7 +203,7 @@ public final class NetworkReaderGTFS
         return routeTrips;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Create missing files (not obligatory files) */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private static void createMissingFiles()
     {
@@ -204,10 +212,8 @@ public final class NetworkReaderGTFS
             createSectionsFile();
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Create the custom route sections file to the specified folder path with trips, routes and stop_times data
-     * Route section = fragment of a route connecting two stops
-     * The frequency correspond to the average frequency of passages of every trip of the route
-     * The time correspond to the average travel time between the two section points of every trip of the route */
+    /** Create the route sections file based on stopTimes, routes and trips files
+     * Route section = fragment of a route connecting two stops */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private static void createSectionsFile()
     {
@@ -217,13 +223,15 @@ public final class NetworkReaderGTFS
         HashMap<String, Trip> trips = readTimeFile();
         HashMap<Route,List<Trip>> routeTripsMap = readTripFile(routes,trips);
         //1 Map = 1 line of the file, key = header, value = value
-        List<HashMap<String,String>> fileLines = createSectionLines(routeTripsMap);
+        List<HashMap<String,String>> fileLines = createSectionFileLines(routeTripsMap);
         TabularFileUtil.writeFile(",", routeSectionsPath, fileLines);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Creates a file line for each section of each Route for the route section file
+     * @param routeTripsMap the map of all the route associated with all their trips
+     * @return a list of map, each map corresponding to a line of the file (keys = headers, values = values) */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private static List<HashMap<String,String>> createSectionLines(HashMap<Route,List<Trip>> routeTripsMap)
+    private static List<HashMap<String,String>> createSectionFileLines(HashMap<Route,List<Trip>> routeTripsMap)
     {
         final String AVG_TIME="avg_time",TO_ID="to_stop_id",FREQUENCY="frequency",ROUTE_TYPE="route_type";
         final String FROM_ID="from_stop_id",FIRST="first_traversal",LAST="last_traversal",ROUTE_NAME="route_name";
@@ -245,9 +253,10 @@ public final class NetworkReaderGTFS
         return fileLines;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** For each two stops linked of a route, create a Section object
-     * @param trips all the trips of the route
-     * @return A RouteSection HashMap <routeSectionId,RouteSection> */
+    /** For each consecutive two stops, create a Section object which contains the two stops id,
+     * the first and last traversal schedule and the average traversal time
+     * @param trips the list of trip of a route
+     * @return the list of sections created */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private static List<Section> createSections(List<Trip> trips)
     {
