@@ -21,31 +21,27 @@ import java.util.List;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public final class NetworkReaderGTFS
 {
-    public final static String TRIPS_FILE ="/trips.txt", TRANSFERS_FILE = "/transfers.txt", STOPS_FILE = "/stops.txt";
-    public final static String SECTIONS_FILE = "/route_sections.txt", PATHWAYS_FILE = "/pathways.txt";
-    public final static String ROUTES_FILE = "/routes.txt", TIMES_FILE = "/stop_times.txt";
     private NetworkReaderGTFS(){}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Reads a GTFS folder and fill the network with data
-     * @param network the network to fill
-     * @param folderPath the path to the GTFS folder */
+    /** Reads a GTFS folder and fill the network with data */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static void readGTFSFolder(Network network, String folderPath)
+    public static Network readFiles()
     {
+        Network network = new Network();
         //Files paths
-        Path sectionsPath = Paths.get(folderPath, SECTIONS_FILE);
-        Path stopsPath = Paths.get(folderPath, STOPS_FILE);
-        Path transfersPath = Paths.get(folderPath, TRANSFERS_FILE);
-        Path pathwaysPath = Paths.get(folderPath, PATHWAYS_FILE);
+        Path sectionsPath = Paths.get(Config.getInstance().networkFiles.gtfs.routeSections);
+        Path stopsPath = Paths.get(Config.getInstance().networkFiles.gtfs.stops);
+        Path transfersPath = Paths.get(Config.getInstance().networkFiles.gtfs.transfers);
+        Path pathwaysPath = Paths.get(Config.getInstance().networkFiles.gtfs.pathways);
         //Create missing files
         if(!Files.exists(sectionsPath))
-            createSectionsFile(folderPath);
+            createSectionsFile();
         //Read files
         TabularFileReader.readFile(stopsPath, new StopsProcessor(network));
         TabularFileReader.readFile(sectionsPath, new SectionsProcessor(network));
         TabularFileReader.readFile(transfersPath,new TransfersProcessor(network));
         TabularFileReader.readFile(pathwaysPath,new PathwaysProcessor(network));
-        //todo create foot transfer if missing
+        return network;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Reads a line of stops.txt file */
@@ -56,9 +52,6 @@ public final class NetworkReaderGTFS
         public static final String PARENT_ID = "parent_station";
         private final Network network;
         private final HashMap<String,List<Node>> stopsChilds;
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
-        /** Constructor */
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
         public StopsProcessor(Network network){this.network = network;this.stopsChilds = new HashMap<>();}
         @Override public String[] split(String line){return NetworkReaderGTFS.split(line);}
         ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -93,13 +86,8 @@ public final class NetworkReaderGTFS
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         private void addParentChildLink(Node parentNode, Node childNode)
         {
-            String linkName = "parentChild";
-            String directId = linkName+":"+childNode.getId()+":"+parentNode.getId();
-            String inverseId = linkName+":"+parentNode.getId()+":"+childNode.getId();
-            Link direct = new Link(directId,childNode,parentNode,linkName);
-            Link inverse = new Link(inverseId,parentNode,childNode,linkName);
-            network.addLink(direct);
-            network.addLink(inverse);
+            network.addLink(new Link(childNode,parentNode,"parentChild"));
+            network.addLink(new Link(parentNode,childNode,"parentChild"));
         }
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -111,9 +99,6 @@ public final class NetworkReaderGTFS
         public static final String ROUTE_TYPE = "route_type", ROUTE_NAME = "route_name", ROUTE_ID = "route_id";
         public static final String  FROM_ID = "from_stop_id", FIRST = "first_traversal", LAST = "last_traversal";
         private final Network network;
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
-        /** Constructor */
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
         public SectionsProcessor(Network network){this.network = network;}
         @Override public String[] split(String line){return NetworkReaderGTFS.split(line);}
         ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -122,7 +107,6 @@ public final class NetworkReaderGTFS
         @Override public void processLine(List<String> headers, String[] values)
         {
             //File values
-            String routeId = values[headers.indexOf(ROUTE_ID)];
             String fromId = values[headers.indexOf(FROM_ID)];
             String toId = values[headers.indexOf(TO_ID)];
             String name = values[headers.indexOf(ROUTE_NAME)];
@@ -132,16 +116,18 @@ public final class NetworkReaderGTFS
             double timeInS = Double.parseDouble(values[headers.indexOf(AVG_TIME)]);
             double frequency = Double.parseDouble(values[headers.indexOf(FREQUENCY)]);
             //Create and add Link
+            int minHour =  Config.getInstance().transportValues.validHours.min;
+            int maxHour = Config.getInstance().transportValues.validHours.max;
             if(!network.containsNode(fromId) || !network.containsNode(toId)) {throw new RuntimeException("Node missing");}
-            if(firstTraversal/3600 <= Config.getInstance().getMaxTime() && lastTraversal/3600 >= Config.getInstance().getMinTime()){
+            if(firstTraversal/3600 <= maxHour && lastTraversal/3600 >= minHour) {
                 Node fromNode = network.getNode(fromId);
                 Node toNode = network.getNode(toId);
-                String section_id = routeId+":"+fromId+":"+toId;
                 Link.ROUTE_TYPE routeType = getRouteType(type);
-                double capacityPerHour = Config.getInstance().getTransportCapacity(routeType) / frequency / 3600;
+                int capacity = Config.getInstance().transportValues.capacities.getCapacity(routeType);
+                double capacityPerHour = capacity / frequency / 3600;
                 double lengthInM = CoordinateUtils.calculateWSG84Distance(fromNode.getCoordinate(),toNode.getCoordinate());
                 double speedInMS = lengthInM / timeInS;
-                Link link = new Link(section_id, fromNode, toNode, speedInMS, capacityPerHour,lengthInM,routeType,name);
+                Link link = new Link(fromNode, toNode, speedInMS, capacityPerHour,lengthInM,routeType,name);
                 network.addLink(link);
             }
         }
@@ -175,9 +161,6 @@ public final class NetworkReaderGTFS
     {
         public final static String FROM_ID = "from_stop_id", TO_ID = "to_stop_id", TIME = "min_transfer_time";
         private final Network network;
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
-        /** Constructor */
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
         public TransfersProcessor(Network network){this.network = network;}
         @Override public String[] split(String line){return NetworkReaderGTFS.split(line);}
         ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -198,14 +181,8 @@ public final class NetworkReaderGTFS
             double lengthInM = CoordinateUtils.calculateWSG84Distance(fromNode.getCoordinate(),toNode.getCoordinate());
             double speedInMS = lengthInM / timeInS;
             double capacityPerHour = 999999;
-            //Direct
-            String directId = name+":"+fromId+':'+toId;
-            Link direct = new Link(directId, fromNode, toNode, speedInMS, capacityPerHour, lengthInM, routeType,name);
-            network.addLink(direct);
-            //Inverse
-            String inverseId = name+":"+toId+':'+fromId;
-            Link inverse = new Link(inverseId, toNode, fromNode, speedInMS, capacityPerHour, lengthInM, routeType,name);
-            network.addLink(inverse);
+            network.addLink(new Link(fromNode, toNode, speedInMS, capacityPerHour, lengthInM, routeType,name));
+            network.addLink(new Link(toNode, fromNode, speedInMS, capacityPerHour, lengthInM, routeType,name));
         }
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -216,9 +193,6 @@ public final class NetworkReaderGTFS
         public static final String LENGTH = "length", FROM_ID = "from_stop_id", TO_ID = "to_stop_id";
         public static final String  BIDIRECTIONAL = "is_bidirectional",TIME = "traversal_time";
         private final Network network;
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
-        /** Constructor */
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
         public PathwaysProcessor(Network network){this.network = network;}
         @Override public String[] split(String line){return NetworkReaderGTFS.split(line);}
         ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -240,14 +214,9 @@ public final class NetworkReaderGTFS
             Link.ROUTE_TYPE routeType = Link.ROUTE_TYPE.FOOT;
             double speedInMS = lengthInM / timeInS;
             double capacityPerHour = 999999;
-            //Direct
-            String directId = name+":"+fromId+':'+toId;
-            Link direct = new Link(directId,fromNode,toNode,speedInMS,capacityPerHour,lengthInM,routeType,name);
-            network.addLink(direct);
-            //Inverse
-            String inverseId = name+":"+toId+':'+fromId;
-            Link inverse = new Link(inverseId, toNode, fromNode, speedInMS, capacityPerHour, lengthInM, routeType,name);
-            if(bidirectional){network.addLink(inverse);}
+            network.addLink(new Link(fromNode,toNode,speedInMS,capacityPerHour,lengthInM,routeType,name));
+            if(bidirectional)
+                network.addLink(new Link(toNode, fromNode, speedInMS, capacityPerHour, lengthInM, routeType,name));
         }
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -258,9 +227,6 @@ public final class NetworkReaderGTFS
         public final static String TRIP_ID = "trip_id", ARRIVAL_TIME = "arrival_time", STOP_ID = "stop_id";
         public final static String SEQUENCE = "stop_sequence";
         HashMap<String,GTFS_CONTAINERS.Trip> trips;
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
-        /** Constructor */
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
         public TimesProcessor(HashMap<String,GTFS_CONTAINERS.Trip> trips){this.trips = trips;}
         @Override public String[] split(String line){return NetworkReaderGTFS.split(line);}
         ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -289,9 +255,6 @@ public final class NetworkReaderGTFS
     {
         public final static String ID = "route_id",TYPE = "route_type", NAME = "route_long_name";
         HashMap<String,GTFS_CONTAINERS.Route> routes;
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
-        /** Constructor */
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
         public RoutesProcessor(HashMap<String,GTFS_CONTAINERS.Route> routes){this.routes = routes;}
         @Override public String[] split(String line){return NetworkReaderGTFS.split(line);}
         ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -334,16 +297,15 @@ public final class NetworkReaderGTFS
     /** Create the custom route sections file to the specified folder path with trips, routes and stop_times data
      * Route section = fragment of a route connecting two stops
      * The frequency correspond to the average frequency of passages of every trip of the route
-     * The time correspond to the average travel time between the two section points of every trip of the route
-     * @param folderPath The path to the GTFS folder */
+     * The time correspond to the average travel time between the two section points of every trip of the route */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private static void createSectionsFile(String folderPath)
+    private static void createSectionsFile()
     {
         //Files paths
-        Path routesPath = Paths.get(folderPath,ROUTES_FILE);
-        Path stopTimesPath = Paths.get(folderPath,TIMES_FILE);
-        Path tripsPath = Paths.get(folderPath,TRIPS_FILE);
-        Path routeSectionsPath = Paths.get(folderPath,SECTIONS_FILE);
+        Path routesPath = Paths.get(Config.getInstance().networkFiles.gtfs.routes);
+        Path stopTimesPath = Paths.get(Config.getInstance().networkFiles.gtfs.stopTimes);
+        Path tripsPath = Paths.get(Config.getInstance().networkFiles.gtfs.trips);
+        Path routeSectionsPath = Paths.get(Config.getInstance().networkFiles.gtfs.routeSections);
         //Extract data from existing files
         HashMap<String,GTFS_CONTAINERS.Route> routes = new HashMap<>();
         HashMap<String,GTFS_CONTAINERS.Trip> trips = new HashMap<>();

@@ -20,7 +20,7 @@ public abstract class TabularFileReader
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public interface LineProcessor
     {
-        String[] split(String line);
+        default String[] split(String line){return line.split(";");}
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** Processes a line of data using the provided headers and values.
          * @param headers The list of headers indicating the position of values in the line

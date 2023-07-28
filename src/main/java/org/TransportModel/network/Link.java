@@ -25,9 +25,11 @@ public class Link
         this.name = name;
     }
     public Link(Node fromNode, Node toNode, double speed, double capacity, double length,ROUTE_TYPE type, String name)
-    {this(fromNode.getId()+":"+toNode.getId(),fromNode,toNode,speed,capacity,length,type,name);}
+    {this(name+":"+fromNode.getId()+":"+toNode.getId(),fromNode,toNode,speed,capacity,length,type,name);}
     public Link(String id, Node fromNode, Node toNode, String name)
     {this(id,fromNode,toNode,9999,9999999,1,ROUTE_TYPE.FOOT,name);}
+    public Link(Node fromNode, Node toNode, String name)
+    {this(name+":"+fromNode.getId()+":"+toNode.getId(),fromNode,toNode,name);}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Getters/Setters */
     ///////////////////////////////////////////////////////////////////////////////////////////////////

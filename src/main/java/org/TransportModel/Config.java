@@ -6,6 +6,7 @@ import org.TransportModel.network.Link;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /** */
@@ -13,10 +14,11 @@ import java.io.IOException;
  public final class  Config
 {
     private static final String CONFIG_PATH = "src/main/resources/config.json";
+    @JsonProperty("transport_values") public TransportValues transportValues;
+    @JsonProperty("network_files") public NetworkFiles networkFiles;
+    @JsonProperty("generation_files") public GenerationFiles generationFiles;
     private static Config instance;
-    @SuppressWarnings("unused") @JsonProperty("filePaths") private FilePaths filePaths;
-    @SuppressWarnings("unused") @JsonProperty("transportTimes") private TransportTimes transportTimes;
-    @SuppressWarnings("unused") @JsonProperty("transportCapacities") private TransportCapacities transportCapacities;
+    private Config() {}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Singleton */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24,73 +26,84 @@ import java.io.IOException;
     {
         if(instance == null){
             try {instance = new ObjectMapper().readValue(new File(CONFIG_PATH), Config.class);}
-            catch (IOException e) {throw new RuntimeException();}}
+            catch (IOException e) {e.printStackTrace();throw new RuntimeException();}}
         return instance;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**  */
+    /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private Config() {}
-    public FilePaths getFilePaths() {return this.filePaths;}
-    public int getMaxTime(){return this.transportTimes.maxTime;}
-    public int getMinTime(){return this.transportTimes.minTime;}
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /**  */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public int getTransportCapacity(Link.ROUTE_TYPE routeType)
+    public static class TransportValues
     {
-        switch(routeType) {
-            case TRAM_OR_LIGHT_SUBWAY:return this.transportCapacities.tramOrLightSubwayCapacity;
-            case BUS:return this.transportCapacities.busCapacity;
-            case TRAIN:return this.transportCapacities.trainCapacity;
-            case SUBWAY:return this.transportCapacities.subwayCapacity;
-            default:return this.transportCapacities.defaultCapacity;
+        @JsonProperty("capacities") public Capacities capacities;
+        @JsonProperty("valid_hours") public ValidHours validHours;
+        private TransportValues(){}
+        ///////////////////////////////////////////////////////////////////////////////////////////////////
+        /** */
+        ///////////////////////////////////////////////////////////////////////////////////////////////////
+        public static class Capacities
+        {
+            @JsonProperty("tram_or_light_subway") public int tramOrLightSubwayCapacity;
+            @JsonProperty("train") public int trainCapacity;
+            @JsonProperty("bus") public int busCapacity;
+            @JsonProperty("subway") public int subwayCapacity;
+            @JsonProperty("default") public int defaultCapacity;
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            /** */
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            public int getCapacity(Link.ROUTE_TYPE routeType)
+            {
+                switch(routeType) {
+                    case TRAM_OR_LIGHT_SUBWAY:return this.tramOrLightSubwayCapacity;
+                    case BUS:return this.busCapacity;
+                    case TRAIN:return this.trainCapacity;
+                    case SUBWAY:return this.subwayCapacity;
+                    default:return this.defaultCapacity;
+                }
+            }
+        }
+        ///////////////////////////////////////////////////////////////////////////////////////////////////
+        /** */
+        ///////////////////////////////////////////////////////////////////////////////////////////////////
+        public static class ValidHours
+        {
+            @JsonProperty("min") public int min;
+            @JsonProperty("max") public int max;
         }
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static class TransportTimes
+    public static class NetworkFiles
     {
-        @SuppressWarnings("unused") @JsonProperty("minTime") private int minTime;
-        @SuppressWarnings("unused") @JsonProperty("maxTime") private int maxTime;
-        private TransportTimes(){}
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static class TransportCapacities
-    {
-        @SuppressWarnings("unused") @JsonProperty("tram_or_light_subway") private int tramOrLightSubwayCapacity;
-        @SuppressWarnings("unused") @JsonProperty("train") private int trainCapacity;
-        @SuppressWarnings("unused") @JsonProperty("bus") private int busCapacity;
-        @SuppressWarnings("unused") @JsonProperty("subway") private int subwayCapacity;
-        @SuppressWarnings("unused") @JsonProperty("default") private int defaultCapacity;
-        private TransportCapacities(){}
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static class FilePaths
-    {
-        @SuppressWarnings("unused") @JsonProperty("networkFolderGTFS") private String networkFolderGTFS;
-        @SuppressWarnings("unused") @JsonProperty("networkFilesBDTOPO") private String[] networkFilesBDTOPO;
-        @SuppressWarnings("unused") @JsonProperty("communesShapeFileBDTOPO") private String communesShapeFileBDTOPO;
-        @SuppressWarnings("unused") @JsonProperty("communesPopulationFileINSEE") private String communesPopulationAndWorkersFileINSEE;
-        @SuppressWarnings("unused") @JsonProperty("communesStudentsFileINSEE") private String communesStudentsFileINSEE;
-        @SuppressWarnings("unused") @JsonProperty("communesWorkFlowsFileINSEE") private String communesWorkFlowsFileINSEE;
-        @SuppressWarnings("unused") @JsonProperty("communesStudentFlowsFileINSEE") private String communesStudentFlowsFileINSEE;
+        @JsonProperty("bdtopo") public String[] bdtopo;
+        @JsonProperty("gtfs") public GTFS gtfs;
+        private NetworkFiles() {}
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
-        private FilePaths() {}
-        public String getNetworkFolderGTFS(){return this.networkFolderGTFS;}
-        public String[] getNetworkFilesBDTOPO(){return this.networkFilesBDTOPO;}
-        public String getCommunesShapeFileBDTOPO(){return this.communesShapeFileBDTOPO;}
-        public String getCommunesPopulationAndWorkersFileINSEE(){return this.communesPopulationAndWorkersFileINSEE;}
-        public String getCommunesStudentsFileINSEE(){return this.communesStudentsFileINSEE;}
-        public String getCommunesWorkFlowsFileINSEE(){return this.communesWorkFlowsFileINSEE;}
-        public String getCommunesStudentFlowsFileINSEE(){return this.communesStudentFlowsFileINSEE;}
-
+        public static class GTFS
+        {
+            @JsonProperty("stops") public String stops;
+            @JsonProperty("trips") public String trips;
+            @JsonProperty("routes") public String routes;
+            @JsonProperty("stop_times") public String stopTimes;
+            @JsonProperty("route_sections") public String routeSections;
+            @JsonProperty("pathways") public String pathways;
+            @JsonProperty("transfers") public String transfers;
+        }
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public static class GenerationFiles
+    {
+        @JsonProperty("zone_shapes") public String zoneShapes;
+        @JsonProperty("population") public String population;
+        @JsonProperty("students_in_population") public String studentsInPopulation;
+        @JsonProperty("workers_in_population") public String workersInPopulation;
+        @JsonProperty("jobs_at_workplace") public String jobsAtWorkplace;
+        @JsonProperty("study_flows") public String studyFlows;
+        @JsonProperty("work_flows") public String workFlows;
+        private GenerationFiles() {}
     }
 }

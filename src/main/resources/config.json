@@ -1,18 +1,28 @@
 {
-  "transportTimes": {
-    "minTime": 6 ,
-    "maxTime": 22
+  "transport_values": {
+    "valid_hours": {
+      "min": 6,
+      "max": 22
+    },
+    "capacities": {
+      "tram_or_light_subway": 50,
+      "train": 200,
+      "bus": 300,
+      "subway": 500,
+      "default": 100
+    }
   },
-  "transportCapacities": {
-    "tram_or_light_subway": 50,
-    "train": 200,
-    "bus": 300,
-    "subway": 500,
-    "default": 100
-  },
-  "filePaths": {
-    "networkFolderGTFS": "src/main/resources/TC/GTFS_IDF",
-    "networkFilesBDTOPO": [
+  "network_files":{
+    "gtfs": {
+      "stops":"src/main/resources/TC/GTFS_IDF/stops.txt",
+      "trips":"src/main/resources/TC/GTFS_IDF/trips.txt",
+      "routes":"src/main/resources/TC/GTFS_IDF/routes.txt",
+      "stop_times": "src/main/resources/TC/GTFS_IDF/stop_times.txt",
+      "route_sections": "src/main/resources/TC/GTFS_IDF/route_sections.txt",
+      "pathways": "src/main/resources/TC/GTFS_IDF/pathways.txt",
+      "transfers": "src/main/resources/TC/GTFS_IDF/transfers.txt"
+    },
+    "bdtopo": [
       "src/main/resources/TI/BDTOPO_75/TRONCON_DE_ROUTE.shp",
       "src/main/resources/TI/BDTOPO_77/TRONCON_DE_ROUTE.shp",
       "src/main/resources/TI/BDTOPO_78/TRONCON_DE_ROUTE.shp",
@@ -21,11 +31,15 @@
       "src/main/resources/TI/BDTOPO_93/TRONCON_DE_ROUTE.shp",
       "src/main/resources/TI/BDTOPO_94/TRONCON_DE_ROUTE.shp",
       "src/main/resources/TI/BDTOPO_95/TRONCON_DE_ROUTE.shp"
-    ],
-    "communesShapeFileBDTOPO": "src/main/resources/Zone/BDTOPO_IDF/communes.shp",
-    "communesPopulationAndWorkersFileINSEE": "src/main/resources/Zone/INSEE_FRANCE/pop-2019.CSV",
-    "communesStudentsFileINSEE": "src/main/resources/Zone/INSEE_FRANCE/base-ic-diplomes-formation-2019.CSV",
-    "communesWorkFlowsFileINSEE": "src/main/resources/Zone/INSEE_FRANCE/FD_MOBPRO_2019.csv",
-    "communesStudentFlowsFileINSEE": "src/main/resources/Zone/INSEE_FRANCE/base-flux-mobilite-domicile-lieu-etude-2019.csv"
+    ]
+  },
+  "generation_files":{
+      "zone_shapes": "src/main/resources/Zone/BDTOPO_IDF/communes.shp",
+      "population": "src/main/resources/Zone/INSEE_FRANCE/base-ic-evol-struct-pop-2019.CSV",
+      "students_in_population": "src/main/resources/Zone/INSEE_FRANCE/TD_FOR1_2020.csv",
+      "workers_in_population": "src/main/resources/Zone/INSEE_FRANCE/TD_ACT1_2020.csv",
+      "jobs_at_workplace": "src/main/resources/Zone/INSEE_FRANCE/TD_EMP1_2020.csv",
+      "study_flows":"src/main/resources/Zone/INSEE_FRANCE/FD_MOBSCO_2020.csv",
+      "work_flows": "src/main/resources/Zone/INSEE_FRANCE/FD_MOBPRO_2019.csv"
   }
 }

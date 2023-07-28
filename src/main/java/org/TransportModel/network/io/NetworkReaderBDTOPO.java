@@ -1,5 +1,6 @@
 package org.TransportModel.network.io;
 
+import org.TransportModel.Config;
 import org.TransportModel.io.ShapeFileReader;
 import org.TransportModel.network.Link;
 import org.TransportModel.network.Network;
@@ -19,13 +20,14 @@ public final class NetworkReaderBDTOPO
 {
     private NetworkReaderBDTOPO(){}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Imports a shapefile of BDTOPO format and creates links from the features
-     * @param filePath The path to the shapefile to import
-     * @param network The network to add the created links to */
+    /** Imports a shapefile of BDTOPO format and creates links from the features */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static void readBDTOPORouteFile(Network network, String filePath)
+    public static Network readFiles()
     {
-        ShapeFileReader.readFile(Paths.get(filePath), new RoadProcessor(network));
+        Network network = new Network();
+        for(String bdtopoFile:Config.getInstance().networkFiles.bdtopo)
+            ShapeFileReader.readFile(Paths.get(bdtopoFile), new RoadProcessor(network));
+        return network;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** 1 feature represents a road section with information like the shape, the direction etc */
@@ -45,7 +47,6 @@ public final class NetworkReaderBDTOPO
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         @Override public void processFeature(SimpleFeature feature) throws Exception
         {
-            ShapeFileReader.displayFeatureAttributes(feature);
             //File values
             MultiLineString multiLineString = (MultiLineString) feature.getDefaultGeometry();
             String imp = (String) feature.getAttribute(IMPORTANCE);
@@ -56,8 +57,8 @@ public final class NetworkReaderBDTOPO
             Integer lanesNbr = (Integer) feature.getAttribute(LANES_NBR);
             Integer speedInKMH = (Integer) feature.getAttribute(SPEED);
             //If valid road, create links and nodes and add them to network
-            boolean importanceOk = (imp.equals("1")||imp.equals("2")||imp.equals("3")||imp.equals("4"));
-            if (importanceOk && condition.equals(USED) && access.equals(FREE) && lanesNbr != null)
+            boolean impOk = (imp.equals("1")||imp.equals("2")||imp.equals("3")||imp.equals("4")||imp.equals("5"));
+            if (impOk && condition.equals(USED) && access.equals(FREE) && lanesNbr != null)
                 for (int i = 0; i < multiLineString.getNumGeometries(); i++)
                     createRoadLinks((LineString)multiLineString.getGeometryN(i),nature,direction,speedInKMH,lanesNbr);
         }
@@ -68,9 +69,11 @@ public final class NetworkReaderBDTOPO
          * @param speedInKMH The speed value
          * @param lanesNbr   The lane nbr */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
-        private void createRoadLinks(LineString lineString,String nature,String direction,int speedInKMH,int lanesNbr)throws Exception
+        private void createRoadLinks(LineString lineString,String nature,String direction,int speedInKMH,int lanesNbr)
         {
-            Coordinate[] wsgCoordinates = CoordinateUtils.convertLambert93ToWGS84(lineString.getCoordinates());
+            Coordinate[] wsgCoordinates;
+            try{ wsgCoordinates = CoordinateUtils.convertLambert93ToWGS84(lineString.getCoordinates());}
+            catch(Exception e){e.printStackTrace();return;}
             Coordinate lastCoordinate = wsgCoordinates[wsgCoordinates.length-1];
             Coordinate firstCoordinate =  wsgCoordinates[0];
             double speedInMS = speedInKMH * (1000.0 / 3600.0);
@@ -80,13 +83,11 @@ public final class NetworkReaderBDTOPO
             //Create nodes and links
             Node fromNode = new Node(direction.equals(INVERSE) ? lastCoordinate:firstCoordinate);
             Node toNode = new Node(direction.equals(INVERSE) ? firstCoordinate:lastCoordinate);
-            Link direct = new Link(fromNode, toNode, speedInMS, maxCapacity, totalLength, type,nature);
-            Link inverse = new Link(toNode, fromNode, speedInMS, maxCapacity, totalLength, type,nature);
-            //Add nodes and links
             network.addNode(fromNode);
             network.addNode(toNode);
-            network.addLink(direct);
-            if(direction.equals(BIDIRECTIONAL)){network.addLink(inverse);}
+            network.addLink(new Link(fromNode, toNode, speedInMS, maxCapacity, totalLength, type, nature));
+            if(direction.equals(BIDIRECTIONAL))
+                network.addLink( new Link(toNode, fromNode, speedInMS, maxCapacity, totalLength, type,nature));
         }
     }
 }

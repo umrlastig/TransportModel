@@ -39,4 +39,6 @@ public class Node
     public List<Link> getOutLinks(){return new ArrayList<>(this.outLinks.values());}
     public void addInLink(Link link){this.inLinks.put(link.getId(),link);}
     public void addOutLink(Link link){this.outLinks.put(link.getId(),link);}
+    public double getX(){return this.getCoordinate().getX();}
+    public double getY(){return this.getCoordinate().getY();}
 }

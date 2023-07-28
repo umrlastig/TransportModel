@@ -1,23 +1,19 @@
 package org.TransportModel;
 
 import com.vividsolutions.jts.util.Assert;
-import org.TransportModel.generation.Area;
 import org.TransportModel.generation.Zone;
-import org.TransportModel.generation.io.CommunesReader;
 import org.TransportModel.gui.GraphCanvas;
 import org.TransportModel.gui.UserInterface;
 import org.TransportModel.network.Link;
 import org.TransportModel.network.Network;
 import org.TransportModel.network.Node;
-import org.TransportModel.network.io.NetworkReaderBDTOPO;
-import org.TransportModel.network.io.NetworkReaderGTFS;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.jgrapht.GraphPath;
 import org.jgrapht.alg.connectivity.ConnectivityInspector;
 import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Set;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,87 +21,23 @@ import java.util.Set;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public class Tests
 {
-    private final Network tiNetwork, tcNetwork;
-    private final Area area;
-    private final UserInterface userInterface;
+    private Tests(){}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public Tests()
+    @SuppressWarnings("unused") public void testNetwork(Network network)
     {
-        //Setup area
-        this.area = new Area();
-        CommunesReader.readShapeFile(area, Config.getInstance().getFilePaths().getCommunesShapeFileBDTOPO());
-        CommunesReader.readPopulationAndWorkersFile(area,Config.getInstance().getFilePaths().getCommunesPopulationAndWorkersFileINSEE());
-        CommunesReader.readStudentsFile(area,Config.getInstance().getFilePaths().getCommunesStudentsFileINSEE());
-        CommunesReader.readWorkFlowsFile(area,Config.getInstance().getFilePaths().getCommunesWorkFlowsFileINSEE());
-        CommunesReader.readStudentFlowsFile(area,Config.getInstance().getFilePaths().getCommunesStudentFlowsFileINSEE());
-        //Setup tc
-        tcNetwork = new Network();
-        NetworkReaderGTFS.readGTFSFolder(tcNetwork, Config.getInstance().getFilePaths().getNetworkFolderGTFS());
-        //Setup ti
-        tiNetwork = new Network();
-        for(String shpFilePath:Arrays.asList(Config.getInstance().getFilePaths().getNetworkFilesBDTOPO()))
-            NetworkReaderBDTOPO.readBDTOPORouteFile(tiNetwork,shpFilePath);
-        //UserInterface
-        this.userInterface = new UserInterface();
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void testArea()
-    {
-        //Take a commune for tests
-        Zone bobigny = area.getZone("93008");
-        Assert.isTrue(bobigny != null,"Commune missing");
-        //Test pop
-        double populationDifference = Math.abs(54363 - bobigny.getPopulation());
-        boolean validPopulation = (populationDifference / bobigny.getPopulation()) * 100 <= 5;
-        Assert.isTrue(validPopulation, "population not good "+populationDifference);
-        //Test workers
-        double workersDifference = Math.abs(22855 - bobigny.getWorkers());
-        boolean validWorkers = (workersDifference / bobigny.getWorkers()) * 100 <= 5;
-        Assert.isTrue(validWorkers, "workers not good: " + bobigny.getWorkers()+"/22855");
-        //Test students
-        double studentsDifference = Math.abs(16887 - bobigny.getStudents());
-        boolean validStudents = (studentsDifference / bobigny.getStudents()) * 100 <= 5;
-        Assert.isTrue(validStudents, "students not good "+bobigny.getStudents()+"/16887");
-        //ok
-        System.out.println("Area ok");
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void testTC()
-    {
-        DirectedWeightedMultigraph<Node, Link> graph = tcNetwork.createGraph();
+        DirectedWeightedMultigraph<Node, Link> graph = network.createGraph();
         //Connected
         ConnectivityInspector<Node,Link> connectivityInspector = new ConnectivityInspector<>(graph);
         int elements = connectivityInspector.connectedSets().size();
-        Assert.isTrue(connectivityInspector.isConnected(),"TC not connected ("+elements+")");
+        Assert.isTrue(connectivityInspector.isConnected(),"Network not connected ("+elements+")");
         //Strongly Connected
         KosarajuStrongConnectivityInspector<Node,Link> strongInspector = new KosarajuStrongConnectivityInspector<>(graph);
         elements = strongInspector.stronglyConnectedSets().size();
-        Assert.isTrue(strongInspector.isStronglyConnected(),"TC not strongly connected ("+elements+")");
+        Assert.isTrue(strongInspector.isStronglyConnected(),"Network not strongly connected ("+elements+")");
         //ok
-        System.out.println("TC ok");
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void testTI()
-    {
-        DirectedWeightedMultigraph<Node, Link> graph = tiNetwork.createGraph();
-        //Connected
-        ConnectivityInspector<Node,Link> connectivityInspector = new ConnectivityInspector<>(graph);
-        int elements = connectivityInspector.connectedSets().size();
-        Assert.isTrue(connectivityInspector.isConnected(),"TI not connected ("+elements+")");
-        //Strongly Connected
-        KosarajuStrongConnectivityInspector<Node,Link> strongInspector = new KosarajuStrongConnectivityInspector<>(graph);
-        elements = strongInspector.stronglyConnectedSets().size();
-        Assert.isTrue(strongInspector.isStronglyConnected(),"TI not strongly connected ("+elements+")");
-        //ok
-        System.out.println("TI ok");
+        System.out.println("Network ok");
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Displays a path with strings */
@@ -125,28 +57,42 @@ public class Tests
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void displayTI()
+    @SuppressWarnings("unused") private void displayConnectedGraphs(Network network)
     {
-        DirectedWeightedMultigraph<Node, Link> graph = tiNetwork.createGraph();
+        DirectedWeightedMultigraph<Node, Link> graph = network.createGraph();
         ConnectivityInspector<Node,Link> connectivityInspector = new ConnectivityInspector<>(graph);
         GraphCanvas graphCanvas = new GraphCanvas();
-        System.out.println(connectivityInspector.connectedSets().size());
-        for(Set<Node> nodes : connectivityInspector.connectedSets())
-        {
+        System.out.println(connectivityInspector.connectedSets().size()+" connected graphs");
+        for(Set<Node> nodes : connectivityInspector.connectedSets()) {
             DirectedWeightedMultigraph<Node, Link> connectedGraph = new DirectedWeightedMultigraph<>(Link.class);
             for(Node node:nodes)
-                for(Link link:node.getOutLinks())
-                {
+                for(Link link:node.getOutLinks()) {
                     connectedGraph.addVertex(link.getFromNode());
                     connectedGraph.addVertex(link.getToNode());
-                    connectedGraph.addEdge(link.getFromNode(),link.getToNode(),link);
-                }
+                    connectedGraph.addEdge(link.getFromNode(),link.getToNode(),link);}
             graphCanvas.addGraph(connectedGraph);
         }
+        UserInterface userInterface = new UserInterface();
         userInterface.display(graphCanvas);
         JButton button = new JButton("nextConnectedGraph");
         button.addActionListener(e -> {graphCanvas.nextIndex();userInterface.repaint();});
         userInterface.addButton(button);
-
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public static void printMatrixPart(RealMatrix matrix, int startRow, int endRow, int startColumn, int endColumn)
+    {
+        int numRows = matrix.getRowDimension();
+        int numColumns = matrix.getColumnDimension();
+        if (startRow < 0 || startRow >= numRows || endRow < 0 || endRow >= numRows || startColumn < 0 ||
+                startColumn >= numColumns || endColumn < 0 || endColumn >= numColumns)
+            throw new IllegalArgumentException();
+        for (int i = startRow; i <= endRow; i++) {
+            for (int j = startColumn; j <= endColumn; j++) {
+                System.out.print(matrix.getEntry(i, j) + "\t");
+            }
+            System.out.println();
+        }
     }
 }

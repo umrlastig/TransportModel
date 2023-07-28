@@ -1,12 +1,16 @@
 package org.TransportModel.network;
 
+import org.TransportModel.utils.CoordinateUtils;
 import org.jgrapht.GraphPath;
+import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
+import org.locationtech.jts.index.kdtree.KdTree;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /** Represents a transportation network */
@@ -36,13 +40,25 @@ public class Network
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public void addNode(Node node)
     {
-        //If Node already exist, replace it in every link
         Node existingNode = this.nodes.get(node.getId());
-        if (existingNode != null) {
+        if (existingNode != null && !existingNode.equals(node)) {
             existingNode.getInLinks().forEach(inLink -> {node.addInLink(inLink); inLink.setToNode(node);});
             existingNode.getOutLinks().forEach(outLink -> {node.addOutLink(outLink); outLink.setFromNode(node);});}
         this.nodes.put(node.getId(),node);
     }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** Removes the node and all associated links from the network
+     * @param id The ID of the node to be removed */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public void removeNode(String id)
+    {
+        Node node = this.nodes.remove(id);
+        for(Link inLink:node.getInLinks())
+            this.removeLink(inLink.getId());
+        for(Link outLink:node.getOutLinks())
+            this.removeLink(outLink.getId());
+    }
+    public void removeNode(Node node){this.removeNode(node.getId());}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Adds a new link
      * @param link The link to add */
@@ -62,18 +78,6 @@ public class Network
         this.links.put(link.getId(),link);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Removes the node and all associated links from the network
-     * @param id The ID of the node to be removed */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    @SuppressWarnings("unused") public void removeNode(String id)
-    {
-        Node node = this.nodes.remove(id);
-        for(Link inLink:node.getInLinks())
-            this.removeLink(inLink.getId());
-        for(Link outLink:node.getOutLinks())
-            this.removeLink(outLink.getId());
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Removes the link with the specified ID from the network
      * @param id The ID of the link to be removed */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -90,21 +94,47 @@ public class Network
         DirectedWeightedMultigraph<Node, Link> graph = new DirectedWeightedMultigraph<>(Link.class);
         for(Node node:this.nodes.values())
             graph.addVertex(node);
-        for(Link link:this.links.values())
-        {
+        for(Link link:this.links.values()) {
             graph.addEdge(link.getFromNode(),link.getToNode(),link);
             double time = link.getLengthInM()/link.getNormalSpeedInMS();
             if(graph.containsEdge(link))
-                graph.setEdgeWeight(link,time);
-        }
+                graph.setEdgeWeight(link,time);}
         return graph;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public void removeNotStronglyConnected()
+    {
+        DirectedWeightedMultigraph<Node, Link> graph = this.createGraph();
+        KosarajuStrongConnectivityInspector<Node,Link> strongInspector = new KosarajuStrongConnectivityInspector<>(graph);
+        int maxSize = 0;
+        Set<Node> largestComponent = null;
+        for (Set<Node> nodes : strongInspector.stronglyConnectedSets())
+            if (nodes.size() > maxSize) {
+                maxSize = nodes.size();
+                largestComponent = nodes;}
+        if (largestComponent != null)
+            for (Node node:this.getNodes())
+                if (!largestComponent.contains(node))
+                   this.removeNode(node);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    @SuppressWarnings("unused") public GraphPath<Node,Link> getShortestPath(String fromNodeId, String toNodeId)
+    public KdTree createKDTree()
     {
-        DirectedWeightedMultigraph<Node, Link> graph = this.createGraph();
+        KdTree kdTree = new KdTree();
+        for(Node node:this.getNodes())
+            kdTree.insert(node.getCoordinate(),node);
+        return kdTree;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    @SuppressWarnings("unused") public GraphPath<Node,Link> getShortestPath(DirectedWeightedMultigraph<Node, Link> graph, String fromNodeId, String toNodeId)
+    {
         DijkstraShortestPath<Node, Link> shortestPathAlgorithm = new DijkstraShortestPath<>(graph);
         return shortestPathAlgorithm.getPath(nodes.get(fromNodeId), nodes.get(toNodeId));
     }

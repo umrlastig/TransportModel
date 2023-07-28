@@ -2,6 +2,7 @@ package org.TransportModel.gui;
 
 import org.TransportModel.network.Link;
 import org.TransportModel.network.Node;
+import org.checkerframework.checker.units.qual.C;
 import org.jgrapht.Graph;
 import org.jgrapht.GraphPath;
 import org.locationtech.jts.geom.Coordinate;
@@ -59,7 +60,13 @@ import java.util.List;
         for (Link link : this.graphs.get(this.graphIndex).edgeSet()) {
             Coordinate from = this.getScaledCoordinate(link.getFromNode().getCoordinate());
             Coordinate to = this.getScaledCoordinate(link.getToNode().getCoordinate());
-            g.drawLine((int)from.x, (int)from.y, (int)to.x, (int)to.y);
+            if(link.getName().equals("centroidLink"))
+            {g.setColor(Color.blue);
+                g.drawLine((int)from.x, (int)from.y, (int)to.x, (int)to.y);
+                g.setColor(Color.red);}
+
+
+            g.drawOval((int)from.x, (int)from.y,2,2);
         }
         //Paths
         g.setColor(Color.green);
