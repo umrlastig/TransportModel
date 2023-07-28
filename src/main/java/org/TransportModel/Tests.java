@@ -1,6 +1,5 @@
 package org.TransportModel;
 
-import com.vividsolutions.jts.util.Assert;
 import org.TransportModel.generation.Zone;
 import org.TransportModel.gui.GraphCanvas;
 import org.TransportModel.gui.UserInterface;
@@ -12,6 +11,7 @@ import org.jgrapht.GraphPath;
 import org.jgrapht.alg.connectivity.ConnectivityInspector;
 import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
+import org.locationtech.jts.util.Assert;
 
 import javax.swing.*;
 import java.util.Set;

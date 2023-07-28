@@ -1,8 +1,6 @@
 package org.TransportModel.network.io;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 public class GTFS_CONTAINERS
 {
@@ -11,10 +9,8 @@ public class GTFS_CONTAINERS
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     static class Route
     {
-        private final String id;
+        private final String id, name;
         private final int type;
-        private final String name;
-        private final HashMap<String,Trip> trips;
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23,15 +19,12 @@ public class GTFS_CONTAINERS
             this.id = id;
             this.type = type;
             this.name = name;
-            this.trips = new HashMap<>();
         }
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         public int getType(){return this.type;}
         public String getName(){return this.name;}
-        public List<Trip> getTrips(){return new ArrayList<>(this.trips.values());}
-        public void addTrip(Trip trip){this.trips.put(trip.getId(),trip);}
         public String getId(){return this.id;}
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +39,8 @@ public class GTFS_CONTAINERS
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         public Trip(String id)
         {
-            this.id = id; this.stops = new HashMap<>();
+            this.id = id;
+            this.stops = new HashMap<>();
         }
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** */
@@ -61,8 +55,7 @@ public class GTFS_CONTAINERS
     static class TripStop
     {
         private final String id;
-        private final int sequence;
-        private final int arrivalTime;
+        private final int sequence, arrivalTime;
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,13 +77,8 @@ public class GTFS_CONTAINERS
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     static class Section
     {
-        private final String toId;
-        private final String fromId;
-        private int traversalCount;
-        private int firstTraversal;
-        private int lastTraversal;
-        private int maxTraversalTime;
-        private int averageTraversalTime;
+        private final String toId, fromId;
+        private int traversalCount, firstTraversal, lastTraversal, maxTraversalTime, averageTraversalTime;
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,18 +86,15 @@ public class GTFS_CONTAINERS
         {
             this.fromId = fromId;
             this.toId = toId;
-            this.traversalCount = 0;
-            this.maxTraversalTime = 0;
-            this.averageTraversalTime = 0;
             this.firstTraversal = Integer.MAX_VALUE;
             this.lastTraversal = Integer.MIN_VALUE;
+            this.traversalCount = this.maxTraversalTime = this.averageTraversalTime = 0;
         }
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         public int getAverageFrequency(){return (this.lastTraversal-this.firstTraversal)/this.traversalCount;}
         public int getAverageTraversalTime() {return this.averageTraversalTime;}
-
         public int getFirstTraversal(){return this.firstTraversal;}
         public int getLastTraversal(){return this.lastTraversal;}
         public String getFromId(){return this.fromId;}
@@ -119,9 +104,9 @@ public class GTFS_CONTAINERS
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         public void addTraversal(int fromArrivalTime, int toArrivalTime)
         {
+            int traversalTime = Math.max(29,(toArrivalTime - fromArrivalTime));
             this.firstTraversal = Math.min(fromArrivalTime, this.firstTraversal);
             this.lastTraversal = Math.max(fromArrivalTime, this.lastTraversal);
-            int traversalTime = Math.max(29,(toArrivalTime - fromArrivalTime));
             this.averageTraversalTime = (averageTraversalTime*traversalCount+traversalTime)/(traversalCount+1);
             this.maxTraversalTime = Math.max(traversalTime,this.maxTraversalTime);
             this.traversalCount++;

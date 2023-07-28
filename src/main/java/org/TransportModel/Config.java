@@ -6,7 +6,6 @@ import org.TransportModel.network.Link;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /** */
@@ -37,6 +36,7 @@ import java.net.URI;
         @JsonProperty("capacities") public Capacities capacities;
         @JsonProperty("valid_hours") public ValidHours validHours;
         private TransportValues(){}
+        public int getCapacity(Link.ROUTE_TYPE routeType){return this.capacities.getCapacity(routeType);}
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,8 +57,7 @@ import java.net.URI;
                     case BUS:return this.busCapacity;
                     case TRAIN:return this.trainCapacity;
                     case SUBWAY:return this.subwayCapacity;
-                    default:return this.defaultCapacity;
-                }
+                    default:return this.defaultCapacity;}
             }
         }
         ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,6 +67,8 @@ import java.net.URI;
         {
             @JsonProperty("min") public int min;
             @JsonProperty("max") public int max;
+            public boolean isValid(double firstTraversal,double lastTraversal)
+            {return firstTraversal/3600 <= max && lastTraversal/3600 >= min;}
         }
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////

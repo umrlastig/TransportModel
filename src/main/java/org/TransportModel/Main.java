@@ -38,6 +38,7 @@ public class Main
         Network networkTC = NetworkReaderGTFS.readFiles(); t();
         Network networkTI = NetworkReaderBDTOPO.readFiles(); t();
         networkTC.removeNotStronglyConnected(); t();
+        System.out.println(networkTC.getNodes().size());
         networkTI.removeNotStronglyConnected(); t();
         FlowDistributor.linkZones(networkTC,zones); t();
         FlowDistributor.linkZones(networkTI,zones); t();

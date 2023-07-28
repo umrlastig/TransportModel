@@ -1,7 +1,7 @@
 package org.TransportModel.network.io;
 
 import org.TransportModel.Config;
-import org.TransportModel.io.ShapeFileReader;
+import org.TransportModel.io.ShapeFileUtil;
 import org.TransportModel.network.Link;
 import org.TransportModel.network.Network;
 import org.TransportModel.network.Node;
@@ -26,13 +26,13 @@ public final class NetworkReaderBDTOPO
     {
         Network network = new Network();
         for(String bdtopoFile:Config.getInstance().networkFiles.bdtopo)
-            ShapeFileReader.readFile(Paths.get(bdtopoFile), new RoadProcessor(network));
+            ShapeFileUtil.readFile(Paths.get(bdtopoFile), new RoadProcessor(network));
         return network;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** 1 feature represents a road section with information like the shape, the direction etc */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    static class RoadProcessor implements ShapeFileReader.FeatureProcessor
+    static class RoadProcessor implements ShapeFileUtil.FeatureProcessor
     {
         public final static String CONDITION = "ETAT", USED = "En service", IMPORTANCE = "IMPORTANCE", NATURE = "NATURE";
         public final static String SPEED = "VIT_MOY_VL", ACCESS = "ACCES_VL",FREE = "Libre", LANES_NBR = "NB_VOIES";

@@ -13,14 +13,11 @@ import java.util.List;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /** Represents a reader for tabular files */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-public abstract class TabularFileReader
+public abstract class TabularFileUtil
 {
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** This interface defines methods for processing lines of data */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public interface LineProcessor
+    @FunctionalInterface public interface LineSplitter { String[] split(String line);}
+    @FunctionalInterface public interface LineProcessor
     {
-        default String[] split(String line){return line.split(";");}
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** Processes a line of data using the provided headers and values.
          * @param headers The list of headers indicating the position of values in the line
@@ -34,15 +31,14 @@ public abstract class TabularFileReader
      * @param filePath the path to the file to be read
      * @param lineProcessor the LineProcessor object that processes each line */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static void readFile(Path filePath, LineProcessor lineProcessor)
+    public static void readFile(Path filePath, LineSplitter lineSplitter, LineProcessor lineProcessor)
     {
         try (BufferedReader reader = Files.newBufferedReader(filePath))
         {
             String dataLine = reader.readLine();
-            List<String> headers = Arrays.asList(lineProcessor.split(dataLine));
-            while ((dataLine = reader.readLine()) != null)
-            {
-                String[] values = lineProcessor.split(dataLine);
+            List<String> headers = Arrays.asList(lineSplitter.split(dataLine));
+            while ((dataLine = reader.readLine()) != null) {
+                String[] values = lineSplitter.split(dataLine);
                 assert(values.length == headers.size());
                 try{lineProcessor.processLine(headers,values);} catch(Exception e){e.printStackTrace();}
             }
