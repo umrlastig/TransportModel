@@ -27,12 +27,14 @@ public class CommunesReader
     public static HashMap<String,Zone> readShapeFile()
     {
         final String COMMUNE_NAME = "nomcom", CODE_INSEE = "insee";
-        Path filePath = Paths.get(Config.getInstance().generationFiles.zoneShapes);
+        final Path filePath = Paths.get(Config.getGenerationFiles().zoneShapes);
         HashMap<String, Zone> zones = new HashMap<>();
         ShapeFileUtil.readFile(filePath, feature -> {
+            //File values
             long codeINSEE = (long) feature.getAttribute(CODE_INSEE);
             String commune = (String) feature.getAttribute(COMMUNE_NAME);
             Polygon polygon = (Polygon) ((MultiPolygon) feature.getDefaultGeometry()).getGeometryN(0);
+            //Create zone and add to map
             Zone zone = new Zone(Long.toString(codeINSEE), polygon, commune);
             zones.put(Long.toString(codeINSEE), zone);
         });
@@ -43,14 +45,17 @@ public class CommunesReader
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static RealVector readPopulationFile(HashMap<String, Zone> zones)
     {
-        RealVector population = new ArrayRealVector(zones.size());
         final String CODE_INSEE = "COM", POPULATION = "P19_POP";
-        Path filePath = Paths.get(Config.getInstance().generationFiles.population);
-        TabularFileUtil.readFile(filePath,(line)->line.split(";"),(headers, values) -> {
-            String codeINSEE = values[headers.indexOf(CODE_INSEE)];
-            double totalIrisPopulation = Double.parseDouble(values[headers.indexOf(POPULATION)]);
-            if (zones.containsKey(codeINSEE))
-                population.addToEntry(zones.get(codeINSEE).getIndex(),totalIrisPopulation);
+        final Path filePath = Paths.get(Config.getGenerationFiles().population);
+        RealVector population = new ArrayRealVector(zones.size());
+        TabularFileUtil.readFile(filePath,(line)->line.split(";"),(val) -> {
+            //File values
+            String codeINSEE = val.get(CODE_INSEE);
+            double totalIrisPopulation = Double.parseDouble(val.get(POPULATION));
+            //Add to vector at zone index
+            if (zones.containsKey(codeINSEE)){
+                int zoneIndex = zones.get(codeINSEE).getIndex();
+                population.addToEntry(zoneIndex,totalIrisPopulation);}
         });
         return population;
     }
@@ -59,15 +64,18 @@ public class CommunesReader
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static RealVector readWorkersInPopulationFile(HashMap<String, Zone> zones)
     {
-        RealVector workersInPopulation = new ArrayRealVector(zones.size());
         final String CODE_INSEE = "CODGEO", NUMBER = "NB", TYPE = "TACTR_2";
-        Path filePath = Paths.get(Config.getInstance().generationFiles.workersInPopulation);
-        TabularFileUtil.readFile(filePath, (line)->line.split(";"), (headers, values) -> {
-            String codeINSEE = values[headers.indexOf(CODE_INSEE)];
-            double workers = Double.parseDouble(values[headers.indexOf(NUMBER)]);
-            int type = Integer.parseInt(values[headers.indexOf(TYPE)]);
-            if (zones.containsKey(codeINSEE) && type == 11)
-                workersInPopulation.addToEntry(zones.get(codeINSEE).getIndex(),workers);
+        final Path filePath = Paths.get(Config.getGenerationFiles().workersInPopulation);
+        RealVector workersInPopulation = new ArrayRealVector(zones.size());
+        TabularFileUtil.readFile(filePath, (line)->line.split(";"), (val) -> {
+            //File values
+            String codeINSEE = val.get(CODE_INSEE);
+            double workers = Double.parseDouble(val.get(NUMBER));
+            boolean haveAJob = Integer.parseInt(val.get(TYPE)) == 11;
+            //Add to vector at zone index
+            if (zones.containsKey(codeINSEE) && haveAJob){
+                int zoneIndex = zones.get(codeINSEE).getIndex();
+                workersInPopulation.addToEntry(zoneIndex,workers);}
         });
         return workersInPopulation;
     }
@@ -76,15 +84,18 @@ public class CommunesReader
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static RealVector readStudentsInPopulationFile(HashMap<String, Zone> zones)
     {
-        RealVector studentsInPopulation = new ArrayRealVector(zones.size());
         final String CODE_INSEE = "CODGEO", NUMBER = "NB", EDUCATION = "ILETUR";
-        Path filePath = Paths.get(Config.getInstance().generationFiles.studentsInPopulation);
-        TabularFileUtil.readFile(filePath, (line)->line.split(";"), (headers, values) -> {
-            String codeINSEE = values[headers.indexOf(CODE_INSEE)];
-            double students = Double.parseDouble(values[headers.indexOf(NUMBER)]);
-            String education = values[headers.indexOf(EDUCATION)];
-            if (zones.containsKey(codeINSEE) && !education.equals("Z"))
-                studentsInPopulation.addToEntry(zones.get(codeINSEE).getIndex(),students);
+        final Path filePath = Paths.get(Config.getGenerationFiles().studentsInPopulation);
+        RealVector studentsInPopulation = new ArrayRealVector(zones.size());
+        TabularFileUtil.readFile(filePath, (line)->line.split(";"), (val) -> {
+            //File values
+            String codeINSEE = val.get(CODE_INSEE);
+            double students = Double.parseDouble(val.get(NUMBER));
+            boolean areEducated = !val.get(EDUCATION).equals("Z");
+            //Add to vector at zone index
+            if (zones.containsKey(codeINSEE) && areEducated){
+                int zoneIndex = zones.get(codeINSEE).getIndex();
+                studentsInPopulation.addToEntry(zoneIndex,students);}
         });
         return studentsInPopulation;
     }
@@ -93,14 +104,17 @@ public class CommunesReader
     //////////////////////////////////////////////////////////////////////////////////////////////////
     public static RealVector readJobsAtWorkplaceFile(HashMap<String, Zone> zones)
     {
-        RealVector jobsAtWorkplace =  new ArrayRealVector(zones.size());
         final String CODE_INSEE = "CODGEO", NUMBER = "NB";
-        Path filePath = Paths.get(Config.getInstance().generationFiles.jobsAtWorkplace);
-        TabularFileUtil.readFile(filePath, (line)->line.split(";"), (headers, values) -> {
-            String codeINSEE = values[headers.indexOf(CODE_INSEE)];
-            double jobs = Double.parseDouble(values[headers.indexOf(NUMBER)]);
-            if (zones.containsKey(codeINSEE))
-                jobsAtWorkplace.addToEntry(zones.get(codeINSEE).getIndex(),jobs);
+        final Path filePath = Paths.get(Config.getGenerationFiles().jobsAtWorkplace);
+        RealVector jobsAtWorkplace =  new ArrayRealVector(zones.size());
+        TabularFileUtil.readFile(filePath, (line)->line.split(";"), (val) -> {
+            //File values
+            String codeINSEE = val.get(CODE_INSEE);
+            double jobs = Double.parseDouble(val.get(NUMBER));
+            //Add to vector at zone index
+            if (zones.containsKey(codeINSEE)){
+                int zoneIndex = zones.get(codeINSEE).getIndex();
+                jobsAtWorkplace.addToEntry(zoneIndex, jobs);}
         });
         return jobsAtWorkplace;
     }
@@ -109,8 +123,7 @@ public class CommunesReader
     //////////////////////////////////////////////////////////////////////////////////////////////////
     public static RealVector readEducationAtStudyPlaceFile(HashMap<String, Zone> zones)
     {
-        RealVector jobsAtWorkplace =  new ArrayRealVector(zones.size());
-        return jobsAtWorkplace;
+        return new ArrayRealVector(zones.size());
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** For each line of the file, if the Insee code of the source and of the target is found */
@@ -118,18 +131,17 @@ public class CommunesReader
     public static RealMatrix readStudyFlowsFile(HashMap<String,Zone> zones)
     {
         final String FROM = "COMMUNE", TO = "DCETUF", NBR = "IPONDI";
-        Path filePath = Paths.get(Config.getInstance().generationFiles.studyFlows);
+        final Path filePath = Paths.get(Config.getGenerationFiles().studyFlows);
         RealMatrix observedFlows = MatrixUtils.createRealMatrix(zones.size(), zones.size());
-        TabularFileUtil.readFile(filePath, (line)->line.split(";"),  (headers, values) -> {
-            String fromId = values[headers.indexOf(FROM)];
-            String toId = values[headers.indexOf(TO)];
-            double studyFlow = Double.parseDouble(values[headers.indexOf(NBR)]);
+        TabularFileUtil.readFile(filePath, (line)->line.split(";"),  (val) -> {
+            //File values
+            String fromId = val.get(FROM), toId = val.get(TO);
+            double studyFlow = Double.parseDouble(val.get(NBR));
+            //Add to Matrix at [fromIndex,toIndex]
             if (zones.containsKey(fromId) && zones.containsKey(toId)) {
                 int fromIndex = zones.get(fromId).getIndex();
                 int toIndex = zones.get(toId).getIndex();
-                double totalFlow = observedFlows.getEntry(fromIndex, toIndex) + studyFlow;
-                observedFlows.setEntry(fromIndex, toIndex, totalFlow);
-            }
+                observedFlows.addToEntry(fromIndex, toIndex, studyFlow);}
         });
         return observedFlows;
     }
@@ -140,18 +152,19 @@ public class CommunesReader
     public static RealMatrix readWorkFlowsFile(HashMap<String,Zone> zones)
     {
         final String FROM = "COMMUNE", TO = "DCLT", MODE = "TRANS", NBR = "IPONDI";
-        Path filePath = Paths.get(Config.getInstance().generationFiles.workFlows);
+        final Path filePath = Paths.get(Config.getGenerationFiles().workFlows);
         RealMatrix observedFlows = MatrixUtils.createRealMatrix(zones.size(), zones.size());
-        TabularFileUtil.readFile(filePath, (line)->line.split(";"), (headers, values) -> {
-            String fromId = values[headers.indexOf(FROM)];
-            String toId = values[headers.indexOf(TO)];
-            int mode = Integer.parseInt(values[headers.indexOf(MODE)]);
-            double workFlow = Double.parseDouble(values[headers.indexOf(NBR)]);
-            if (zones.containsKey(fromId) && zones.containsKey(toId) && (mode == 6 || mode == 5 || mode == 4)){
+        TabularFileUtil.readFile(filePath, (line)->line.split(";"), (val) -> {
+            //File values
+            String fromId = val.get(FROM), toId = val.get(TO);
+            double workFlow = Double.parseDouble(val.get(NBR));
+            int mode = Integer.parseInt(val.get(MODE));
+            boolean ti = mode == 4 || mode == 5, tc = mode == 6;
+            //Add to Matrix at [fromIndex,toIndex]
+            if (zones.containsKey(fromId) && zones.containsKey(toId) && (tc || ti)){
                 int fromIndex = zones.get(fromId).getIndex();
                 int toIndex = zones.get(toId).getIndex();
-                double totalFlow = observedFlows.getEntry(fromIndex, toIndex) + workFlow;
-                observedFlows.setEntry(fromIndex, toIndex, totalFlow);
+                observedFlows.addToEntry(fromIndex, toIndex, workFlow);
             }
         });
         return observedFlows;

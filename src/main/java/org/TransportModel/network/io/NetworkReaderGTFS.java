@@ -2,9 +2,11 @@ package org.TransportModel.network.io;
 
 import org.TransportModel.Config;
 import org.TransportModel.io.TabularFileUtil;
-import org.TransportModel.network.io.GTFS_CONTAINERS.*;
+import org.TransportModel.network.Link;
 import org.TransportModel.network.Link.ROUTE_TYPE;
-import org.TransportModel.network.*;
+import org.TransportModel.network.Network;
+import org.TransportModel.network.Node;
+import org.TransportModel.network.io.GTFS_CONTAINERS.*;
 import org.TransportModel.utils.CoordinateUtils;
 import org.locationtech.jts.geom.Coordinate;
 
@@ -25,38 +27,37 @@ public final class NetworkReaderGTFS
     public static Network readFiles()
     {
         createMissingFiles();
-        Network network = readStopFile();
+        Network network = new Network();
+        readStopFile(network);
         readSectionsFile(network);
         readTransfersFile(network);
         readPathwaysFile(network);
         return network;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Create a network which contains a Node object for each Stop
-     * @return the network created */
+    /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private static Network readStopFile()
+    private static void readStopFile(Network network)
     {
         final String ID = "stop_id", NAME = "stop_name", LON = "stop_lon", LAT = "stop_lat", PARENT_ID = "parent_station";
-        Path filePath = Paths.get(Config.getInstance().networkFiles.gtfs.stops);
-        Network network = new Network();
-        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(headers, values) -> {
+        Path filePath = Paths.get(Config.getNetworkFiles().gtfs.stops);
+        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(val) -> {
             //File values
-            String stopId = values[headers.indexOf(ID)];
-            String name = values[headers.indexOf(NAME)];
-            String parentStopId = values[headers.indexOf(PARENT_ID)];
-            double lon = Double.parseDouble(values[headers.indexOf(LON)]);
-            double lat = Double.parseDouble(values[headers.indexOf(LAT)]);
+            String nodeName = val.get(NAME), nodeId = val.get(ID), parentNodeId = val.get(PARENT_ID);
+            double lon = Double.parseDouble(val.get(LON)), lat = Double.parseDouble(val.get(LAT));
             //Add node to network
-            network.addNode(new Node(stopId,name,new Coordinate(lon,lat)));
+            Node newNode = new Node(nodeId, nodeName, new Coordinate(lon,lat));
+            network.addNode(newNode);
             //Link to parent if has parent node
-            if(!parentStopId.isEmpty()){
-                if(!network.containsNode(parentStopId))//(if parent not already added, create a Node to represents it)
-                    network.addNode(new Node(parentStopId,new Coordinate(lon,lat)));
-                network.addLink(new Link(network.getNode(parentStopId),network.getNode(stopId),"parentChild"));
-                network.addLink(new Link(network.getNode(stopId),network.getNode(parentStopId),"parentChild"));}
+            if(!parentNodeId.isEmpty()){
+                //(if parent not already added, create a Node to represents it)
+                if(!network.containsNode(val.get(PARENT_ID)))
+                    network.addNode(new Node(parentNodeId,new Coordinate(lon,lat)));
+                String linkName = "parentChild";
+                Node parentNode = network.getNode(parentNodeId);
+                network.addLink(new Link(parentNode,newNode,linkName));
+                network.addLink(new Link(newNode,parentNode,linkName));}
         });
-        return network;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Add a link to the network for each section
@@ -64,29 +65,24 @@ public final class NetworkReaderGTFS
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private static void readSectionsFile(Network network)
     {
-        final String AVG_TIME="avg_time",TO_ID="to_stop_id",FREQUENCY="frequency",TYPE="route_type";
-        final String FROM_ID="from_stop_id",FIRST="first_traversal",LAST="last_traversal",ROUTE_NAME="route_name";
-        Path filePath = Paths.get(Config.getInstance().networkFiles.gtfs.routeSections);
-        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(headers, values) -> {
+        final String AVG_TIME = "avg_time", TO_ID = "to_stop_id", FREQUENCY = "frequency", TYPE = "route_type";
+        final String FROM_ID = "from_stop_id", FIRST = "first_traversal" , LAST = "last_traversal", NAME = "route_name";
+        Path filePath = Paths.get(Config.getNetworkFiles().gtfs.routeSections);
+        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(val) -> {
             //File values
-            String fromId = values[headers.indexOf(FROM_ID)];
-            String toId = values[headers.indexOf(TO_ID)];
-            String name = values[headers.indexOf(ROUTE_NAME)];
-            int firstTraversal = Integer.parseInt(values[headers.indexOf(FIRST)]);
-            int lastTraversal = Integer.parseInt(values[headers.indexOf(LAST)]);
-            int type = Integer.parseInt(values[headers.indexOf(TYPE)]);
-            double timeInS = Double.parseDouble(values[headers.indexOf(AVG_TIME)]);
-            double frequency = Double.parseDouble(values[headers.indexOf(FREQUENCY)]);
-            if(!Config.getInstance().transportValues.validHours.isValid(firstTraversal,lastTraversal)){return;}
-            //Create and add Link
-            Node fromNode = network.getNode(fromId);
-            Node toNode = network.getNode(toId);
-            ROUTE_TYPE routeType = getRouteType(type);
-            double capacityPerHour = Config.getInstance().transportValues.getCapacity(routeType) / frequency / 3600;
-            double lengthInM = CoordinateUtils.calculateWSG84Distance(fromNode.getCoordinate(),toNode.getCoordinate());
-            double speedInMS = lengthInM / timeInS;
-            Link link = new Link(fromNode, toNode, speedInMS, capacityPerHour,lengthInM,routeType,name);
-            network.addLink(link);
+            String linkName = val.get(NAME), fromId = val.get(FROM_ID), toId = val.get(TO_ID);
+            double timeInS = Double.parseDouble(val.get(AVG_TIME)), frequency = Double.parseDouble(val.get(FREQUENCY));
+            int firstTraversalInS = Integer.parseInt(val.get(FIRST)), lastTraversalInS = Integer.parseInt(val.get(LAST));
+            //Create and add Link (if in period set in config)
+            if(!Config.getTransportValues().areHoursValid(firstTraversalInS, lastTraversalInS)) {
+                Node fromNode = network.getNode(fromId);
+                Node toNode = network.getNode(toId);
+                ROUTE_TYPE routeType = getRouteType(Integer.parseInt(val.get(TYPE)));
+                double capacityPerHour = Config.getTransportCapacity(routeType)/frequency/3600;
+                double lengthInM = CoordinateUtils.calculateWSG84Distance(fromNode.getCoordinate(),toNode.getCoordinate());
+                double speedInMS = lengthInM / timeInS;
+                Link link = new Link(fromNode, toNode, speedInMS, capacityPerHour,lengthInM, routeType, linkName);
+                network.addLink(link);}
         });
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -96,22 +92,21 @@ public final class NetworkReaderGTFS
     private static void readTransfersFile(Network network)
     {
         final String FROM_ID = "from_stop_id", TO_ID = "to_stop_id", TIME = "min_transfer_time";
-        Path filePath = Paths.get(Config.getInstance().networkFiles.gtfs.transfers);
-        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(headers, values) -> {
+        Path filePath = Paths.get(Config.getNetworkFiles().gtfs.transfers);
+        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(val) -> {
             //File values
-            String fromId = values[headers.indexOf(FROM_ID)];
-            String toId = values[headers.indexOf(TO_ID)];
-            double timeInS = Double.parseDouble(values[headers.indexOf(TIME)]);
+            String fromId = val.get(FROM_ID), toId = val.get(TO_ID);
+            double timeInS = Double.parseDouble(val.get(TIME));
             //Create and add Link
-            String name = "Transfer";
+            String linkName = "Transfer";
             Node fromNode = network.getNode(fromId);
             Node toNode = network.getNode(toId);
-            Link.ROUTE_TYPE routeType = Link.ROUTE_TYPE.FOOT;
+            ROUTE_TYPE routeType = ROUTE_TYPE.FOOT;
             double lengthInM = CoordinateUtils.calculateWSG84Distance(fromNode.getCoordinate(), toNode.getCoordinate());
             double speedInMS = lengthInM / timeInS;
-            double capacityPerHour = 999999;
-            network.addLink(new Link(fromNode, toNode, speedInMS, capacityPerHour, lengthInM, routeType, name));
-            network.addLink(new Link(toNode, fromNode, speedInMS, capacityPerHour, lengthInM, routeType, name));
+            double capacityPerHour = Double.MAX_VALUE;
+            network.addLink(new Link(fromNode, toNode, speedInMS, capacityPerHour, lengthInM, routeType, linkName));
+            network.addLink(new Link(toNode, fromNode, speedInMS, capacityPerHour, lengthInM, routeType, linkName));
         });
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -121,21 +116,19 @@ public final class NetworkReaderGTFS
     private static void readPathwaysFile(Network network)
     {
         final String LENGTH="length",FROM_ID="from_stop_id",TO_ID="to_stop_id",BI="is_bidirectional",TIME="traversal_time";
-        Path filePath = Paths.get(Config.getInstance().networkFiles.gtfs.pathways);
-        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(headers, values) -> {
+        Path filePath = Paths.get(Config.getNetworkFiles().gtfs.pathways);
+        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(val) -> {
             //File values
-            String fromId = values[headers.indexOf(FROM_ID)];
-            String toId = values[headers.indexOf(TO_ID)];
-            boolean bidirectional = values[headers.indexOf(BI)].equals("1");
-            double lengthInM = Double.parseDouble(values[headers.indexOf(LENGTH)]);
-            double timeInS = Double.parseDouble(values[headers.indexOf(TIME)]);
+            String fromId = val.get(FROM_ID), toId = val.get(TO_ID);
+            double lengthInM = Double.parseDouble(val.get(LENGTH)), timeInS = Double.parseDouble(val.get(TIME));
+            boolean bidirectional = val.get(BI).equals("1");
             //Create and add Link
             String name = "Pathway";
             Node fromNode = network.getNode(fromId);
             Node toNode = network.getNode(toId);
-            Link.ROUTE_TYPE routeType = Link.ROUTE_TYPE.FOOT;
+            ROUTE_TYPE routeType = ROUTE_TYPE.FOOT;
             double speedInMS = lengthInM / timeInS;
-            double capacityPerHour = 999999;
+            double capacityPerHour = Double.MAX_VALUE;
             network.addLink(new Link(fromNode,toNode,speedInMS,capacityPerHour,lengthInM,routeType,name));
             if(bidirectional)
                 network.addLink(new Link(toNode, fromNode, speedInMS, capacityPerHour, lengthInM, routeType,name));
@@ -148,15 +141,14 @@ public final class NetworkReaderGTFS
     private static HashMap<String,Route> readRouteFile()
     {
         final String ID = "route_id",TYPE = "route_type", NAME = "route_long_name";
-        Path filePath = Paths.get(Config.getInstance().networkFiles.gtfs.routes);
+        Path filePath = Paths.get(Config.getNetworkFiles().gtfs.routes);
         HashMap<String,Route> routes = new HashMap<>();
-        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(headers,values) -> {
+        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(val) -> {
             //File values
-            String routeName = values[headers.indexOf(NAME)];
-            String routeId = values[headers.indexOf(ID)];
-            int routeType = Integer.parseInt(values[headers.indexOf(TYPE)]);
-            //Create a TripStop object to contain data and add it to the associated Trip object
-            routes.put(routeId,new Route(routeId,routeType,routeName));
+            String id = val.get(ID), name = val.get(NAME);
+            int type = Integer.parseInt(val.get(TYPE));
+            //Add to map
+            routes.put(id,new Route(type,name));
         });
         return routes;
     }
@@ -168,18 +160,18 @@ public final class NetworkReaderGTFS
     public static HashMap<String,Trip> readTimeFile()
     {
         final  String TRIP_ID = "trip_id", ARRIVAL_TIME = "arrival_time", STOP_ID = "stop_id",SEQUENCE = "stop_sequence";
-        Path filePath = Paths.get(Config.getInstance().networkFiles.gtfs.stopTimes);
+        Path filePath = Paths.get(Config.getNetworkFiles().gtfs.stopTimes);
         HashMap<String,Trip> trips = new HashMap<>();
-        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(headers, values) -> {
+        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(val) -> {
             //File values
-            String[] t = values[headers.indexOf(ARRIVAL_TIME)].split(":");
-            String tripId = values[headers.indexOf(TRIP_ID)];
-            String stopId = values[headers.indexOf(STOP_ID)];
-            int stopSequence = Integer.parseInt(values[headers.indexOf(SEQUENCE)]);
+            String stopId = val.get(STOP_ID), tripId = val.get(TRIP_ID);
+            int sequence = Integer.parseInt(val.get(SEQUENCE));
+            int[] arrivalTime = Arrays.stream(val.get(ARRIVAL_TIME).split(":")).mapToInt(Integer::parseInt).toArray();
             //Create a TripStop object to contain data and add it to the associated Trip object
-            int arrivalTimeInS = Integer.parseInt(t[0]) * 3600 + Integer.parseInt(t[1]) * 60 + Integer.parseInt(t[2]);
-            TripStop tripStop = new TripStop(stopId,stopSequence,arrivalTimeInS);
-            trips.computeIfAbsent(tripId, k -> new Trip(tripId)).addStop(tripStop);
+            int arrivalTimeInS = arrivalTime[0] * 3600 + arrivalTime[1] * 60 + arrivalTime[2];
+            TripStop tripStop = new TripStop(stopId,sequence,arrivalTimeInS);
+            trips.putIfAbsent(tripId, new Trip());
+            trips.get(tripId).addStop(tripStop);
         });
         return trips;
     }
@@ -187,18 +179,21 @@ public final class NetworkReaderGTFS
     /** Associate each route with all its trips
      * @param routes all the routes <routeId,route>
      * @param trips all the trips <tripId,trip>
-     * @return route-trips map <route,List<trip>>*/
+     * @return route-trips map <route,List<trip>> */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static HashMap<Route,List<Trip>> readTripFile(HashMap<String,Route> routes, HashMap<String,Trip> trips)
     {
         final String ROUTE_ID = "route_id", ID = "trip_id";
-        Path filePath = Paths.get(Config.getInstance().networkFiles.gtfs.trips);
+        Path filePath = Paths.get(Config.getNetworkFiles().gtfs.trips);
         HashMap<Route,List<Trip>> routeTrips = new HashMap<>();
-        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(headers, values) -> {
+        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(val) -> {
             //File values
-            String tripId = values[headers.indexOf(ID)];
-            String routeId = values[headers.indexOf(ROUTE_ID)];
-            routeTrips.computeIfAbsent(routes.get(routeId), k -> new ArrayList<>()).add(trips.get(tripId));
+            String routeId = val.get(ROUTE_ID), tripId = val.get(ID);
+            //Add the trip to the route's list
+            Route route = routes.get(routeId);
+            Trip trip = trips.get(tripId);
+            routeTrips.putIfAbsent(route,new ArrayList<>());
+            routeTrips.get(route).add(trip);
         });
         return routeTrips;
     }
@@ -207,7 +202,7 @@ public final class NetworkReaderGTFS
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private static void createMissingFiles()
     {
-        Path sectionsPath = Paths.get(Config.getInstance().networkFiles.gtfs.routeSections);
+        Path sectionsPath = Paths.get(Config.getNetworkFiles().gtfs.routeSections);
         if(!Files.exists(sectionsPath))
             createSectionsFile();
     }
@@ -217,7 +212,7 @@ public final class NetworkReaderGTFS
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private static void createSectionsFile()
     {
-        Path routeSectionsPath = Paths.get(Config.getInstance().networkFiles.gtfs.routeSections);
+        Path routeSectionsPath = Paths.get(Config.getNetworkFiles().gtfs.routeSections);
         //Extract data from existing files
         HashMap<String, Route> routes = readRouteFile();
         HashMap<String, Trip> trips = readTimeFile();

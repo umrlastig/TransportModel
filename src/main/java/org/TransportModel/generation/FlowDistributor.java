@@ -41,7 +41,8 @@ public class FlowDistributor
                 if(!from.equals(to)){
                     GraphPath<Node,Link> path = shortestPathAlgorithm.getPath(network.getNode(from.getId()), network.getNode(to.getId()));
                     times.setEntry(from.getIndex(),to.getIndex(),path.getWeight());}
-        return times;**/
+        return times;
+         **/
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */

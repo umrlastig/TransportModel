@@ -20,11 +20,9 @@ public abstract class TabularFileUtil
     {
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** Processes a line of data using the provided headers and values.
-         * @param headers The list of headers indicating the position of values in the line
-         * @param values  The array of values extracted from the line
          * @throws Exception if an error occurs during the processing of the line */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
-        void processLine(List<String> headers, String[] values) throws Exception;
+        void processLine(HashMap<String,String> valuesMap) throws Exception;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Reads a file line by line and processes each line using the provided LineProcessor
@@ -33,14 +31,17 @@ public abstract class TabularFileUtil
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static void readFile(Path filePath, LineSplitter lineSplitter, LineProcessor lineProcessor)
     {
-        try (BufferedReader reader = Files.newBufferedReader(filePath))
-        {
+        try (BufferedReader reader = Files.newBufferedReader(filePath)) {
             String dataLine = reader.readLine();
             List<String> headers = Arrays.asList(lineSplitter.split(dataLine));
             while ((dataLine = reader.readLine()) != null) {
                 String[] values = lineSplitter.split(dataLine);
                 assert(values.length == headers.size());
-                try{lineProcessor.processLine(headers,values);} catch(Exception e){e.printStackTrace();}
+                HashMap<String,String> valuesMap = new HashMap<>();
+                for(int i = 0; i<headers.size();i++)
+                    valuesMap.put(headers.get(i),values[i]);
+                try{lineProcessor.processLine(valuesMap);}
+                catch(Exception e){e.printStackTrace();}
             }
         }
         catch (IOException e){throw new RuntimeException(e);}

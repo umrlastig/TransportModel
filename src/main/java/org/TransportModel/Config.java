@@ -18,10 +18,14 @@ import java.io.IOException;
     @JsonProperty("generation_files") public GenerationFiles generationFiles;
     private static Config instance;
     private Config() {}
+    public static double getTransportCapacity(Link.ROUTE_TYPE type){return getInstance().transportValues.getCapacity(type);}
+    public static NetworkFiles getNetworkFiles(){return getInstance().networkFiles;}
+    public static GenerationFiles getGenerationFiles(){return getInstance().generationFiles;}
+    public static TransportValues getTransportValues(){return getInstance().transportValues;}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Singleton */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static Config getInstance()
+    private static Config getInstance()
     {
         if(instance == null){
             try {instance = new ObjectMapper().readValue(new File(CONFIG_PATH), Config.class);}
@@ -37,6 +41,7 @@ import java.io.IOException;
         @JsonProperty("valid_hours") public ValidHours validHours;
         private TransportValues(){}
         public int getCapacity(Link.ROUTE_TYPE routeType){return this.capacities.getCapacity(routeType);}
+        public boolean areHoursValid(double first, double last){return validHours.areValid(first,last);}
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         /** */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -67,7 +72,7 @@ import java.io.IOException;
         {
             @JsonProperty("min") public int min;
             @JsonProperty("max") public int max;
-            public boolean isValid(double firstTraversal,double lastTraversal)
+            public boolean areValid(double firstTraversal,double lastTraversal)
             {return firstTraversal/3600 <= max && lastTraversal/3600 >= min;}
         }
     }

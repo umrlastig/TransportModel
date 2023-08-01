@@ -24,70 +24,47 @@ public final class NetworkReaderBDTOPO
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static Network readFiles()
     {
+        final String CONDITION="ETAT",IMPORTANCE="IMPORTANCE",ACCESS="ACCES_VL",FREE="Libre",USED="En service";
         Network network = new Network();
-        for(String bdtopoFile:Config.getInstance().networkFiles.bdtopo)
-            ShapeFileUtil.readFile(Paths.get(bdtopoFile), new RoadProcessor(network));
+        for(String bdtopoFilePath:Config.getNetworkFiles().bdtopo)
+            ShapeFileUtil.readFile(Paths.get(bdtopoFilePath), feature -> {
+                //File values
+                boolean free = feature.getAttribute(ACCESS).equals(FREE), used = feature.getAttribute(CONDITION).equals(USED);
+                boolean noAccess = feature.getAttribute(IMPORTANCE).equals(6);
+                //If valid road, create and add links to the network
+                if(!noAccess && free && used)
+                    createRoadLinks(network,feature);
+            });
         return network;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** 1 feature represents a road section with information like the shape, the direction etc */
+    /** Adds nodes and links to the network based on the provided LineString geometry and direction */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    static class RoadProcessor implements ShapeFileUtil.FeatureProcessor
+    private static void createRoadLinks(Network network, SimpleFeature feature) throws Exception
     {
-        public final static String CONDITION = "ETAT", USED = "En service", IMPORTANCE = "IMPORTANCE", NATURE = "NATURE";
-        public final static String SPEED = "VIT_MOY_VL", ACCESS = "ACCES_VL",FREE = "Libre", LANES_NBR = "NB_VOIES";
-        public final static String DIRECTION = "SENS", INVERSE = "Sens inverse", BIDIRECTIONAL = "Double sens";
-        private final Network network;
-        //////////////////////////////////////////////////////////////////////////////////////////////////
-        /** Constructor */
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
-        public RoadProcessor(Network network){this.network = network;}
-        //////////////////////////////////////////////////////////////////////////////////////////////////
-        /** Create links and Nodes and them adds to the network */
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
-        @Override public void processFeature(SimpleFeature feature) throws Exception
-        {
-            //File values
-            MultiLineString multiLineString = (MultiLineString) feature.getDefaultGeometry();
-            String imp = (String) feature.getAttribute(IMPORTANCE);
-            String condition = (String) feature.getAttribute(CONDITION);
-            String access = (String) feature.getAttribute(ACCESS);
-            String direction = (String)feature.getAttribute(DIRECTION);
-            String nature = (String)feature.getAttribute(NATURE);
-            Integer lanesNbr = (Integer) feature.getAttribute(LANES_NBR);
-            Integer speedInKMH = (Integer) feature.getAttribute(SPEED);
-            //If valid road, create links and nodes and add them to network
-            boolean impOk = (imp.equals("1")||imp.equals("2")||imp.equals("3")||imp.equals("4")||imp.equals("5"));
-            if (impOk && condition.equals(USED) && access.equals(FREE) && lanesNbr != null)
-                for (int i = 0; i < multiLineString.getNumGeometries(); i++)
-                    createRoadLinks((LineString)multiLineString.getGeometryN(i),nature,direction,speedInKMH,lanesNbr);
-        }
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
-        /** Adds nodes and links to the network based on the provided LineString geometry and direction
-         * @param lineString The LineString geometry representing the route
-         * @param direction  The direction of the route
-         * @param speedInKMH The speed value
-         * @param lanesNbr   The lane nbr */
-        ///////////////////////////////////////////////////////////////////////////////////////////////////
-        private void createRoadLinks(LineString lineString,String nature,String direction,int speedInKMH,int lanesNbr)
-        {
-            Coordinate[] wsgCoordinates;
-            try{ wsgCoordinates = CoordinateUtils.convertLambert93ToWGS84(lineString.getCoordinates());}
-            catch(Exception e){e.printStackTrace();return;}
-            Coordinate lastCoordinate = wsgCoordinates[wsgCoordinates.length-1];
-            Coordinate firstCoordinate =  wsgCoordinates[0];
-            double speedInMS = speedInKMH * (1000.0 / 3600.0);
-            double maxCapacity = lanesNbr * 1800;
-            double totalLength = CoordinateUtils.calculateWSG84Distance(wsgCoordinates);
-            Link.ROUTE_TYPE type = Link.ROUTE_TYPE.ROAD;
-            //Create nodes and links
-            Node fromNode = new Node(direction.equals(INVERSE) ? lastCoordinate:firstCoordinate);
-            Node toNode = new Node(direction.equals(INVERSE) ? firstCoordinate:lastCoordinate);
+        final String SPEED="VIT_MOY_VL",SENS="SENS",BI="Double sens",INV="Sens inverse",LANES="NB_VOIES",NATURE="NATURE";
+        //File values
+        MultiLineString multiLineString = (MultiLineString) feature.getDefaultGeometry();
+        String nature = (String)feature.getAttribute(NATURE), direction = (String)feature.getAttribute(SENS);
+        boolean bidirectional = direction.equals(BI), inverse = direction.equals(INV);
+        int lanesNbr = feature.getAttribute(LANES) == null ? (int)feature.getAttribute(LANES):1;
+        int speedInKMH = (int) feature.getAttribute(SPEED);
+        //Create and add a link to the network for each lineString
+        for (int i = 0; i < multiLineString.getNumGeometries(); i++){
+            LineString lineString = (LineString)multiLineString.getGeometryN(i);
+            Coordinate[] coordinates = CoordinateUtils.convertLambert93ToWGS84(lineString.getCoordinates());
+            //Create nodes
+            Node fromNode = new Node(inverse ? coordinates[coordinates.length-1]:coordinates[0]);
+            Node toNode = new Node(inverse ? coordinates[0]:coordinates[coordinates.length-1]);
             network.addNode(fromNode);
             network.addNode(toNode);
+            //Create links
+            double speedInMS = speedInKMH * (1000.0 / 3600.0);
+            double maxCapacity = lanesNbr * 1800;
+            double totalLength = CoordinateUtils.calculateWSG84Distance(coordinates);
+            Link.ROUTE_TYPE type = Link.ROUTE_TYPE.ROAD;
             network.addLink(new Link(fromNode, toNode, speedInMS, maxCapacity, totalLength, type, nature));
-            if(direction.equals(BIDIRECTIONAL))
-                network.addLink( new Link(toNode, fromNode, speedInMS, maxCapacity, totalLength, type,nature));
-        }
+            if(bidirectional)
+                network.addLink(new Link(toNode, fromNode, speedInMS, maxCapacity, totalLength, type, nature));}
     }
 }
