@@ -7,13 +7,12 @@ import org.TransportModel.network.Node;
 import org.TransportModel.utils.CoordinateUtils;
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.util.FastMath;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.index.kdtree.KdNode;
-import org.locationtech.jts.index.kdtree.KdTree;
+import org.jgrapht.alg.shortestpath.AStarShortestPath;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
+import org.jgrapht.graph.DirectedWeightedMultigraph;
+import org.locationtech.jts.geom.Coordinate;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /** */
@@ -23,62 +22,29 @@ public class FlowDistributor
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static RealMatrix calculateMinTimes(HashMap<String,Zone> zones,Network... networks)
-    {
+    public static RealMatrix calculateMinTimes(HashMap<String,Zone> zones,Network... networks) {
         RealMatrix minTimes = MatrixUtils.createRealMatrix(zones.size(), zones.size());
-        List<Zone> zoneList = new ArrayList<>(zones.values());
-        for (int i = 0; i < zoneList.size() - 1; i++)
-            for (int j = i + 1; j < zoneList.size(); j++) {
-                Zone from = zoneList.get(i);
-                Zone to = zoneList.get(j);
-                double distance = CoordinateUtils.calculateWSG84Distance(from.getCentroid(),to.getCentroid());
-                minTimes.setEntry(from.getIndex(),to.getIndex(),distance);}
+        for (Network network : networks) {
+            DirectedWeightedMultigraph<Node, Link> graph = network.createGraph();
+            DijkstraShortestPath<Node,Link> shortestPath = new DijkstraShortestPath<>(graph);
+            for (Zone from : zones.values())
+                for (Zone to : zones.values())
+                    if (!from.equals(to)) {
+                        double start = System.currentTimeMillis();
+                        Coordinate fromC = from.getCentroid(), toC = to.getCentroid();
+                        Coordinate center = new Coordinate((fromC.x + toC.x) / 2, (fromC.y + toC.y) / 2);
+                        double radius = CoordinateUtils.calculateWSG84Distance(fromC,center);
+                        double maxDistance = 1.2*radius;
+                        double time = shortestPath.getPath(network.getNode(from.getId()),network.getNode(to.getId())).getWeight();
+                        System.out.println(System.currentTimeMillis()-start);
+                    }
+        }
         return minTimes;
-        /**
-        DijkstraShortestPath<Node, Link> shortestPathAlgorithm = new DijkstraShortestPath<>(network.createGraph());
-        for(Zone from:zones.values())
-            for(Zone to:zones.values())
-                if(!from.equals(to)){
-                    GraphPath<Node,Link> path = shortestPathAlgorithm.getPath(network.getNode(from.getId()), network.getNode(to.getId()));
-                    times.setEntry(from.getIndex(),to.getIndex(),path.getWeight());}
-        return times;
-         **/
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static void linkZones(Network network, HashMap<String, Zone> zones)
-    {
-        KdTree kdTree = network.createKDTree();
-        for(Zone zone:zones.values()) {
-            Node zoneNode = new Node(zone.getId(),zone.getName(),zone.getCentroid());
-            network.addNode(zoneNode);
-            List<?> nearNodes = null;
-            double size = 0.01;
-            while(nearNodes == null || nearNodes.isEmpty() || nearNodes.size() == 1)
-            {
-                double x = zone.getCentroid().x;
-                double y = zone.getCentroid().y;
-                Envelope envelope = new Envelope(x-size,x+size,y-size,y+size);
-                nearNodes = kdTree.query(envelope);
-                size=size*2;
-            }
-            double minDistance = Double.MAX_VALUE;
-            Node closestNode = null;
-            for(Object kdNode: nearNodes){
-                Node node = (Node)((KdNode)kdNode).getData();
-                if(node != zoneNode) {
-                    double distance = CoordinateUtils.calculateWSG84Distance(node.getCoordinate(),zoneNode.getCoordinate());
-                    if(closestNode == null || distance < minDistance) {
-                        closestNode = node;
-                        minDistance = distance;}}}
-            network.addLink(new Link(zoneNode,closestNode,"centroidLink"));
-            network.addLink(new Link(closestNode,zoneNode,"centroidLink"));}
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static void calculateWeights(RealVector inPopulation, RealVector atActivityPlace, RealMatrix minTimes)
+    public static RealVector[] calculateWeights(RealVector inPopulation, RealVector atActivityPlace, RealMatrix minTimes)
     {
         final double epsilon = 1e-5, t0 = 1;
         int zoneNbr = inPopulation.getDimension();
@@ -94,5 +60,6 @@ public class FlowDistributor
             for(int j = 0; j < wNextB.getDimension(); j++)
                 wNextB.setEntry(j,1/wA.ebeMultiply(inPopulation).ebeMultiply(expTimes.getRowVector(j)).getL1Norm());
         } while(wNextA.subtract(wA).getL1Norm()+wNextB.subtract(wB).getL1Norm() > epsilon);
+        return new RealVector[]{wA,wB};
     }
 }

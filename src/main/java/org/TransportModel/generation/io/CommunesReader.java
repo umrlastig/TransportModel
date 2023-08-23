@@ -146,14 +146,14 @@ public class CommunesReader
         return observedFlows;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** For each line of the file, if the Insee code of the source and of the target is found,
-     * add the flow to the flow matrix of the area */
+    /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static RealMatrix readWorkFlowsFile(HashMap<String,Zone> zones)
+    public static RealMatrix[] readWorkFlowsFile(HashMap<String,Zone> zones)
     {
         final String FROM = "COMMUNE", TO = "DCLT", MODE = "TRANS", NBR = "IPONDI";
         final Path filePath = Paths.get(Config.getGenerationFiles().workFlows);
-        RealMatrix observedFlows = MatrixUtils.createRealMatrix(zones.size(), zones.size());
+        RealMatrix observedFlowsTC = MatrixUtils.createRealMatrix(zones.size(), zones.size());
+        RealMatrix observedFlowsTI = MatrixUtils.createRealMatrix(zones.size(), zones.size());
         TabularFileUtil.readFile(filePath, (line)->line.split(";"), (val) -> {
             //File values
             String fromId = val.get(FROM), toId = val.get(TO);
@@ -161,12 +161,15 @@ public class CommunesReader
             int mode = Integer.parseInt(val.get(MODE));
             boolean ti = mode == 4 || mode == 5, tc = mode == 6;
             //Add to Matrix at [fromIndex,toIndex]
-            if (zones.containsKey(fromId) && zones.containsKey(toId) && (tc || ti)){
+            if (zones.containsKey(fromId) && zones.containsKey(toId)){
                 int fromIndex = zones.get(fromId).getIndex();
                 int toIndex = zones.get(toId).getIndex();
-                observedFlows.addToEntry(fromIndex, toIndex, workFlow);
+                if(tc)
+                    observedFlowsTC.addToEntry(fromIndex, toIndex, workFlow);
+                else if(ti)
+                    observedFlowsTI.addToEntry(fromIndex, toIndex, workFlow);
             }
         });
-        return observedFlows;
+        return new RealMatrix[]{observedFlowsTC,observedFlowsTI};
     }
 }

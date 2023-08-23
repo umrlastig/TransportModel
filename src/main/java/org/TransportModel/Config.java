@@ -10,7 +10,7 @@ import java.io.IOException;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /** */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
- public final class  Config
+ public final class Config
 {
     private static final String CONFIG_PATH = "src/main/resources/config.json";
     @JsonProperty("transport_values") public TransportValues transportValues;
@@ -94,7 +94,6 @@ import java.io.IOException;
             @JsonProperty("routes") public String routes;
             @JsonProperty("stop_times") public String stopTimes;
             @JsonProperty("route_sections") public String routeSections;
-            @JsonProperty("pathways") public String pathways;
             @JsonProperty("transfers") public String transfers;
         }
     }

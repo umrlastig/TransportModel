@@ -6,7 +6,10 @@ import org.TransportModel.network.Link;
 import org.TransportModel.network.Link.ROUTE_TYPE;
 import org.TransportModel.network.Network;
 import org.TransportModel.network.Node;
-import org.TransportModel.network.io.GTFS_CONTAINERS.*;
+import org.TransportModel.network.io.GTFS_CONTAINERS.Route;
+import org.TransportModel.network.io.GTFS_CONTAINERS.Section;
+import org.TransportModel.network.io.GTFS_CONTAINERS.Trip;
+import org.TransportModel.network.io.GTFS_CONTAINERS.TripStop;
 import org.TransportModel.utils.CoordinateUtils;
 import org.locationtech.jts.geom.Coordinate;
 
@@ -28,42 +31,42 @@ public final class NetworkReaderGTFS
     {
         createMissingFiles();
         Network network = new Network();
-        readStopFile(network);
-        readSectionsFile(network);
-        readTransfersFile(network);
-        readPathwaysFile(network);
+        HashMap<String,String> stopParent = readStopFile(network);
+        readSectionsFile(network, stopParent);
+        readTransfersFile(network, stopParent);
         return network;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Reads stop file from a GTFS  and for each stop:
+     * If the stop does not have a parent station, a new Node object representing the stop is created and added to the network
+     * If the stop has a parent station, a mapping of the stop's ID to its parent station's ID is added to the HashMap
+     * @param network The network to which the Node objects will be added
+     * @return A Map<stopId,stopParentId> */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private static void readStopFile(Network network)
+    private static HashMap<String,String> readStopFile(Network network)
     {
         final String ID = "stop_id", NAME = "stop_name", LON = "stop_lon", LAT = "stop_lat", PARENT_ID = "parent_station";
         Path filePath = Paths.get(Config.getNetworkFiles().gtfs.stops);
+        HashMap<String,String> stopParent = new HashMap<>();
         TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(val) -> {
             //File values
             String nodeName = val.get(NAME), nodeId = val.get(ID), parentNodeId = val.get(PARENT_ID);
             double lon = Double.parseDouble(val.get(LON)), lat = Double.parseDouble(val.get(LAT));
-            //Add node to network
-            Node newNode = new Node(nodeId, nodeName, new Coordinate(lon,lat));
-            network.addNode(newNode);
-            //Link to parent if has parent node
-            if(!parentNodeId.isEmpty()){
-                //(if parent not already added, create a Node to represents it)
-                if(!network.containsNode(val.get(PARENT_ID)))
-                    network.addNode(new Node(parentNodeId,new Coordinate(lon,lat)));
-                String linkName = "parentChild";
-                Node parentNode = network.getNode(parentNodeId);
-                network.addLink(new Link(parentNode,newNode,linkName));
-                network.addLink(new Link(newNode,parentNode,linkName));}
+            //If stop don't have parent, had node to the network else add to map
+            if(parentNodeId.isEmpty())
+                network.addNode(new Node(nodeId, nodeName, new Coordinate(lon,lat)));
+            else
+                stopParent.put(nodeId,parentNodeId);
         });
+        return stopParent;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Add a link to the network for each section
-     * @param network the network to add the links to */
+    /** Reads a route section file (previously created), for each section creates and adds a link to the network
+     * If either of the stops within a section has a parent station, the link is established with the parent station
+     * @param network The network to which the links will be added
+     * @param stopParent A Map<stopId,stopParentId> */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private static void readSectionsFile(Network network)
+    private static void readSectionsFile(Network network, HashMap<String, String> stopParent)
     {
         final String AVG_TIME = "avg_time", TO_ID = "to_stop_id", FREQUENCY = "frequency", TYPE = "route_type";
         final String FROM_ID = "from_stop_id", FIRST = "first_traversal" , LAST = "last_traversal", NAME = "route_name";
@@ -74,22 +77,24 @@ public final class NetworkReaderGTFS
             double timeInS = Double.parseDouble(val.get(AVG_TIME)), frequency = Double.parseDouble(val.get(FREQUENCY));
             int firstTraversalInS = Integer.parseInt(val.get(FIRST)), lastTraversalInS = Integer.parseInt(val.get(LAST));
             //Create and add Link (if in period set in config)
-            if(!Config.getTransportValues().areHoursValid(firstTraversalInS, lastTraversalInS)) {
-                Node fromNode = network.getNode(fromId);
-                Node toNode = network.getNode(toId);
+            if(Config.getTransportValues().areHoursValid(firstTraversalInS, lastTraversalInS)) {
+                Node fromNode = stopParent.containsKey(fromId)?network.getNode(stopParent.get(fromId)):network.getNode(fromId);
+                Node toNode = stopParent.containsKey(toId)?network.getNode(stopParent.get(toId)):network.getNode(toId);
                 ROUTE_TYPE routeType = getRouteType(Integer.parseInt(val.get(TYPE)));
                 double capacityPerHour = Config.getTransportCapacity(routeType)/frequency/3600;
                 double lengthInM = CoordinateUtils.calculateWSG84Distance(fromNode.getCoordinate(),toNode.getCoordinate());
                 double speedInMS = lengthInM / timeInS;
                 Link link = new Link(fromNode, toNode, speedInMS, capacityPerHour,lengthInM, routeType, linkName);
-                network.addLink(link);}
+                    network.addLink(link);}
         });
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Add a link to the network for each transfer
-     * @param network the network to add the links to */
+    /** Reads a transfer file from a GTFS, for each transfer creates and adds a link to the network
+     * If either of the stops within a section has a parent station, the link is established with the parent station
+     * @param network The network to which the links will be added
+     * @param stopParent A Map<stopId,stopParentId> */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private static void readTransfersFile(Network network)
+    private static void readTransfersFile(Network network, HashMap<String, String> stopParent)
     {
         final String FROM_ID = "from_stop_id", TO_ID = "to_stop_id", TIME = "min_transfer_time";
         Path filePath = Paths.get(Config.getNetworkFiles().gtfs.transfers);
@@ -99,8 +104,8 @@ public final class NetworkReaderGTFS
             double timeInS = Double.parseDouble(val.get(TIME));
             //Create and add Link
             String linkName = "Transfer";
-            Node fromNode = network.getNode(fromId);
-            Node toNode = network.getNode(toId);
+            Node fromNode = stopParent.containsKey(fromId)?network.getNode(stopParent.get(fromId)):network.getNode(fromId);
+            Node toNode = stopParent.containsKey(toId)?network.getNode(stopParent.get(toId)):network.getNode(toId);
             ROUTE_TYPE routeType = ROUTE_TYPE.FOOT;
             double lengthInM = CoordinateUtils.calculateWSG84Distance(fromNode.getCoordinate(), toNode.getCoordinate());
             double speedInMS = lengthInM / timeInS;
@@ -110,33 +115,9 @@ public final class NetworkReaderGTFS
         });
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Add a link to the network for each pathway
-     * @param network the network to add the links to */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private static void readPathwaysFile(Network network)
-    {
-        final String LENGTH="length",FROM_ID="from_stop_id",TO_ID="to_stop_id",BI="is_bidirectional",TIME="traversal_time";
-        Path filePath = Paths.get(Config.getNetworkFiles().gtfs.pathways);
-        TabularFileUtil.readFile(filePath,NetworkReaderGTFS::split,(val) -> {
-            //File values
-            String fromId = val.get(FROM_ID), toId = val.get(TO_ID);
-            double lengthInM = Double.parseDouble(val.get(LENGTH)), timeInS = Double.parseDouble(val.get(TIME));
-            boolean bidirectional = val.get(BI).equals("1");
-            //Create and add Link
-            String name = "Pathway";
-            Node fromNode = network.getNode(fromId);
-            Node toNode = network.getNode(toId);
-            ROUTE_TYPE routeType = ROUTE_TYPE.FOOT;
-            double speedInMS = lengthInM / timeInS;
-            double capacityPerHour = Double.MAX_VALUE;
-            network.addLink(new Link(fromNode,toNode,speedInMS,capacityPerHour,lengthInM,routeType,name));
-            if(bidirectional)
-                network.addLink(new Link(toNode, fromNode, speedInMS, capacityPerHour, lengthInM, routeType,name));
-        });
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Store data of each route in a Route object (routeId, routeName, routeType)
-     * @return all the route <routeId,route> */
+    /** Reads the route file from a GTFS and for each route stores the data in a route object
+     * containing the route names and types
+     * @return A Map<routeId,Route> */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private static HashMap<String,Route> readRouteFile()
     {
@@ -153,8 +134,8 @@ public final class NetworkReaderGTFS
         return routes;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Store data of each trip in a Trip object. A trip object contains for all the trip's stop the arrival time,
-     * the stop id and the stop sequence
+    /** Reads the trip file from a GTFS and for each trip stores the data in a trip object
+     * containing for all the trip's stop the arrival time the stop id and the stop sequence
      * @return all the trips <tripId,trip> */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static HashMap<String,Trip> readTimeFile()
@@ -258,6 +239,7 @@ public final class NetworkReaderGTFS
         HashMap<String, Section> sectionsMap = new HashMap<>();
         for(Trip trip:trips) {
             List<TripStop> stops =  new ArrayList<>(trip.getStops().values());
+            //Sort stops by sequence and create a section for each two consecutive stops
             stops.sort(Comparator.comparingInt(TripStop::getSequence));
             for (int i = 0; i < stops.size()-1;i++) {
                 TripStop fromStop = stops.get(i);

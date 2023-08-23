@@ -39,6 +39,13 @@ public class Node
     public List<Link> getOutLinks(){return new ArrayList<>(this.outLinks.values());}
     public void addInLink(Link link){this.inLinks.put(link.getId(),link);}
     public void addOutLink(Link link){this.outLinks.put(link.getId(),link);}
+    public void removeInLink(Link link){this.removeInLink(link.getId());}
+    public void removeOutLink(Link link){this.removeOutLink(link.getId());}
+    public void removeInLink(String id){this.inLinks.remove(id);}
+    public void removeOutLink(String id){this.outLinks.remove(id);}
     public double getX(){return this.getCoordinate().getX();}
     public double getY(){return this.getCoordinate().getY();}
+
+    public Link getOutLink(String id) {return this.outLinks.get(id);}
+    public Link getInLink(String id) {return this.inLinks.get(id);}
 }

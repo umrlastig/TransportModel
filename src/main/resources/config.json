@@ -19,7 +19,6 @@
       "routes":"src/main/resources/TC/GTFS_IDF/routes.txt",
       "stop_times": "src/main/resources/TC/GTFS_IDF/stop_times.txt",
       "route_sections": "src/main/resources/TC/GTFS_IDF/route_sections.txt",
-      "pathways": "src/main/resources/TC/GTFS_IDF/pathways.txt",
       "transfers": "src/main/resources/TC/GTFS_IDF/transfers.txt"
     },
     "bdtopo": [

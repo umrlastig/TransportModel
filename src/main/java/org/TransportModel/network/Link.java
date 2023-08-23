@@ -1,13 +1,15 @@
 package org.TransportModel.network;
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /** Represents a connection between two nodes in the transportation network */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public class Link
 {
     public enum ROUTE_TYPE {TRAM_OR_LIGHT_SUBWAY, TRAIN, BUS, SUBWAY, UNDEFINED, FOOT, ROAD}
-    String id;
-    ROUTE_TYPE type;
-    String name;
+    private final String id;
+    private final ROUTE_TYPE type;
+    private final String name;
     private Node fromNode, toNode;
     private final double lengthInM, normalSpeedInMS, capacityPerHour;
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27,7 +29,7 @@ public class Link
     public Link(Node fromNode, Node toNode, double speed, double capacity, double length,ROUTE_TYPE type, String name)
     {this(name+":"+fromNode.getId()+":"+toNode.getId(),fromNode,toNode,speed,capacity,length,type,name);}
     public Link(String id, Node fromNode, Node toNode, String name)
-    {this(id,fromNode,toNode,9999,9999999,1,ROUTE_TYPE.FOOT,name);}
+    {this(id,fromNode,toNode,Double.MAX_VALUE,Double.MAX_VALUE,0,ROUTE_TYPE.FOOT,name);}
     public Link(Node fromNode, Node toNode, String name)
     {this(name+":"+fromNode.getId()+":"+toNode.getId(),fromNode,toNode,name);}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35,7 +37,7 @@ public class Link
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public double getNormalSpeedInMS(){return this.normalSpeedInMS;}
     public double getLengthInM(){return this.lengthInM;}
-    @SuppressWarnings("unused") public double getCapacityPerHour(){return this.capacityPerHour;}
+    public double getCapacityPerHour(){return this.capacityPerHour;}
     public Node getFromNode(){return this.fromNode;}
     public Node getToNode(){return this.toNode;}
     public void setFromNode(Node node){this.fromNode = node;}
@@ -43,5 +45,26 @@ public class Link
     public String getId(){return this.id;}
     public ROUTE_TYPE getType(){return this.type;}
     public String getName(){return this.name;}
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public Link fusLink(Link linkToFusWith)
+    {
+        String id = this.getId()+":"+linkToFusWith.getId();
+        double speed = (this.getNormalSpeedInMS() + linkToFusWith.getNormalSpeedInMS())/2;
+        double capacity = this.getCapacityPerHour()+linkToFusWith.capacityPerHour;
+        double length = this.getLengthInM() + linkToFusWith.getLengthInM();
+        ROUTE_TYPE type = this.getType();
+        String name = this.getName() + "-"+linkToFusWith.getName();
+        if(this.getNormalSpeedInMS() == Double.MAX_VALUE){speed = linkToFusWith.getNormalSpeedInMS();}
+        else if(linkToFusWith.getNormalSpeedInMS() == Double.MAX_VALUE){speed = this.getNormalSpeedInMS();}
+        if(this.getCapacityPerHour() == Double.MAX_VALUE){capacity = linkToFusWith.capacityPerHour;}
+        else if(linkToFusWith.getCapacityPerHour() == Double.MAX_VALUE){capacity = this.getCapacityPerHour();}
+        if(this.getFromNode().equals(linkToFusWith.getToNode()))
+            return new Link(id,linkToFusWith.getFromNode(),this.getToNode(),speed,capacity,length,type,name);
+        else if(linkToFusWith.getFromNode().equals(this.getToNode()))
+            return new Link(id,this.getFromNode(),linkToFusWith.getToNode(),speed,capacity,length,type,name);
+        else throw new RuntimeException();
+    }
 }
 

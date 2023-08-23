@@ -5,31 +5,36 @@ import java.awt.*;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /**  */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-public class UserInterface extends JFrame
+public final class UserInterface extends JFrame
 {
-    private final JPanel graphContainer;
+    private static UserInterface instance;
+    private final JPanel imageContainer;
     private final JPanel buttonsContainer;
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Constructor */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public UserInterface()
+    private UserInterface()
     {
-        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.graphContainer = new JPanel();
+        this.imageContainer = new JPanel();
         this.buttonsContainer = new JPanel();
-        this.setupGraphContainer();
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Dimension screenSize = toolkit.getScreenSize();
+        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        this.setupImageContainer();
         this.setupButtonsContainer();
-        this.setSize(new Dimension(1000,800));
+        this.setSize(screenSize);
         this.setVisible(true);
+    }
+    public static UserInterface getInstance()
+    {
+        if(instance==null)
+            instance = new UserInterface();
+        return instance;
     }
     public void addButton(JButton button) {this.buttonsContainer.add(button);}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /**  */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private void setupGraphContainer()
+    private void setupImageContainer()
     {
-        this.graphContainer.setBackground(Color.black);
-        this.getContentPane().add(graphContainer, BorderLayout.CENTER);
+        this.getContentPane().add(imageContainer, BorderLayout.CENTER);
         this.revalidate();
         this.repaint();
     }
@@ -47,9 +52,8 @@ public class UserInterface extends JFrame
     public void display(JComponent component)
     {
         component.setPreferredSize(new Dimension(900, 900));
-        this.graphContainer.add(component, BorderLayout.CENTER);
+        this.imageContainer.add(component, BorderLayout.CENTER);
         this.revalidate();
         this.repaint();
     }
-
 }

@@ -39,7 +39,7 @@ public class CoordinateUtils
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static Coordinate[] convertLambert93ToWGS84(Coordinate[] lambertCoordinates) throws Exception
+    public static Coordinate[] convertLambert93ToWGS84(Coordinate[] lambertCoordinates)
     {
         Coordinate[] wsgCoordinates = new Coordinate[lambertCoordinates.length];
         for (int i = 0; i < lambertCoordinates.length; i++)
@@ -47,20 +47,47 @@ public class CoordinateUtils
         return wsgCoordinates;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public static Coordinate[] convertWGS84ToLambert93(Coordinate[] lambertCoordinates)
+    {
+        Coordinate[] wsgCoordinates = new Coordinate[lambertCoordinates.length];
+        for (int i = 0; i < lambertCoordinates.length; i++)
+            wsgCoordinates[i] = convertWGS84ToLambert93(lambertCoordinates[i]);
+        return wsgCoordinates;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Converts Lambert-93 coordinates to degrees (latitude and longitude)
      * @param lambertCoordinate The Lambert-93 coordinate to be converted
      * @return A Coordinate object representing the converted latitude and longitude in degrees */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static Coordinate convertLambert93ToWGS84(Coordinate lambertCoordinate) throws Exception
+    public static Coordinate convertLambert93ToWGS84(Coordinate lambertCoordinate)
     {
-        CoordinateReferenceSystem sourceCRS = CRS.decode("EPSG:2154");//Lambert-93
-        CoordinateReferenceSystem targetCRS = CRS.decode("EPSG:4326");//WGS84
-        MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS, true);
-        DirectPosition2D sourcePosition = new DirectPosition2D(sourceCRS,lambertCoordinate.getX(),lambertCoordinate.getY());
-        DirectPosition2D targetPosition = new DirectPosition2D();
-        transform.transform(sourcePosition, targetPosition);
-        double latitude = targetPosition.getY();
-        double longitude = targetPosition.getX();
-        return new Coordinate(latitude, longitude);
+        return convertCoordinateSystem(lambertCoordinate,"EPSG:2154","EPSG:4326");
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public static Coordinate convertWGS84ToLambert93(Coordinate lambertCoordinate)
+    {
+        return convertCoordinateSystem(lambertCoordinate,"EPSG:4326","EPSG:2154");
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public static Coordinate convertCoordinateSystem(Coordinate lambertCoordinate,String source, String target)
+    {
+        try {
+            CoordinateReferenceSystem sourceCRS = CRS.decode(source);
+            CoordinateReferenceSystem targetCRS = CRS.decode(target);
+            MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS, true);
+            DirectPosition2D sourcePosition = new DirectPosition2D(sourceCRS, lambertCoordinate.getX(), lambertCoordinate.getY());
+            DirectPosition2D targetPosition = new DirectPosition2D();
+            transform.transform(sourcePosition, targetPosition);
+            double latitude = targetPosition.getY();
+            double longitude = targetPosition.getX();
+            return new Coordinate(latitude, longitude);
+        }
+        catch(Exception e){throw new RuntimeException();}
     }
 }

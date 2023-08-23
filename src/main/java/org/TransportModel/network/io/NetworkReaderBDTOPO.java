@@ -24,21 +24,23 @@ public final class NetworkReaderBDTOPO
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static Network readFiles()
     {
-        final String CONDITION="ETAT",IMPORTANCE="IMPORTANCE",ACCESS="ACCES_VL",FREE="Libre",USED="En service";
+        final String CONDITION="ETAT",IMPORTANCE="IMPORTANCE",ACCESS="ACCES_VL",FREE="Libre",USED="En service",TOLL="A pÃ©age";
         Network network = new Network();
         for(String bdtopoFilePath:Config.getNetworkFiles().bdtopo)
             ShapeFileUtil.readFile(Paths.get(bdtopoFilePath), feature -> {
                 //File values
-                boolean free = feature.getAttribute(ACCESS).equals(FREE), used = feature.getAttribute(CONDITION).equals(USED);
-                boolean noAccess = feature.getAttribute(IMPORTANCE).equals(6);
+                boolean free = feature.getAttribute(ACCESS).equals(FREE) || feature.getAttribute(ACCESS).equals(TOLL);
+                boolean used = feature.getAttribute(CONDITION).equals(USED);
+                boolean circulationPossible = !feature.getAttribute(IMPORTANCE).equals("6")
+                        && !feature.getAttribute(IMPORTANCE).equals("5");
                 //If valid road, create and add links to the network
-                if(!noAccess && free && used)
+                if(circulationPossible && free && used)
                     createRoadLinks(network,feature);
             });
         return network;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Adds nodes and links to the network based on the provided LineString geometry and direction */
+    /** Adds nodes and links to the network based on the provided feature */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private static void createRoadLinks(Network network, SimpleFeature feature) throws Exception
     {
@@ -47,24 +49,25 @@ public final class NetworkReaderBDTOPO
         MultiLineString multiLineString = (MultiLineString) feature.getDefaultGeometry();
         String nature = (String)feature.getAttribute(NATURE), direction = (String)feature.getAttribute(SENS);
         boolean bidirectional = direction.equals(BI), inverse = direction.equals(INV);
-        int lanesNbr = feature.getAttribute(LANES) == null ? (int)feature.getAttribute(LANES):1;
+        int lanesNbr = feature.getAttribute(LANES) == null ? 1:(int)feature.getAttribute(LANES);
         int speedInKMH = (int) feature.getAttribute(SPEED);
         //Create and add a link to the network for each lineString
-        for (int i = 0; i < multiLineString.getNumGeometries(); i++){
-            LineString lineString = (LineString)multiLineString.getGeometryN(i);
+        for (int i = 0; i < multiLineString.getNumGeometries(); i++) {
+            LineString lineString = (LineString) multiLineString.getGeometryN(i);
             Coordinate[] coordinates = CoordinateUtils.convertLambert93ToWGS84(lineString.getCoordinates());
-            //Create nodes
+            //Create and add nodes
             Node fromNode = new Node(inverse ? coordinates[coordinates.length-1]:coordinates[0]);
             Node toNode = new Node(inverse ? coordinates[0]:coordinates[coordinates.length-1]);
             network.addNode(fromNode);
             network.addNode(toNode);
-            //Create links
-            double speedInMS = speedInKMH * (1000.0 / 3600.0);
+            //Create and add links
+            double speedInMS = speedInKMH * (1000.0/3600.0);
             double maxCapacity = lanesNbr * 1800;
             double totalLength = CoordinateUtils.calculateWSG84Distance(coordinates);
             Link.ROUTE_TYPE type = Link.ROUTE_TYPE.ROAD;
             network.addLink(new Link(fromNode, toNode, speedInMS, maxCapacity, totalLength, type, nature));
             if(bidirectional)
-                network.addLink(new Link(toNode, fromNode, speedInMS, maxCapacity, totalLength, type, nature));}
+                network.addLink(new Link(toNode, fromNode, speedInMS, maxCapacity, totalLength, type, nature));
+        }
     }
 }
