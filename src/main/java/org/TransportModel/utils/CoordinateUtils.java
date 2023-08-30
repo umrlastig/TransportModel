@@ -8,13 +8,16 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/** */
+/** A utility class for working with coordinates*/
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public class CoordinateUtils
 {
+    public final static String LAMBERT93 = "EPSG:2154", WSG84 = "EPSG:4326";
     private CoordinateUtils(){}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Calculates the total distance  in meters between a series of coordinates
+     * @param coordinates An array of coordinates
+     * @return The total calculated distance between the given coordinates*/
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static double calculateWSG84Distance(Coordinate[] coordinates)
     {
@@ -37,51 +40,35 @@ public class CoordinateUtils
         return calculator.getOrthodromicDistance();
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Converts an array of coordinates from one coordinate system to another
+     * @param coordinates The array of input Coordinates to be converted
+     * @param source The source Coordinate Reference System (CRS) representation
+     * @param target The target Coordinate Reference System (CRS) representation
+     * @return An array of new Coordinate objects representing the converted coordinates
+     * @throws RuntimeException If any error occurs during the coordinate conversion */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static Coordinate[] convertLambert93ToWGS84(Coordinate[] lambertCoordinates)
+    public static Coordinate[] convertCoordinatesSystems(Coordinate[] coordinates,String source, String target)
     {
-        Coordinate[] wsgCoordinates = new Coordinate[lambertCoordinates.length];
-        for (int i = 0; i < lambertCoordinates.length; i++)
-            wsgCoordinates[i] = convertLambert93ToWGS84(lambertCoordinates[i]);
-        return wsgCoordinates;
+        Coordinate[] convertedCoordinates = new Coordinate[coordinates.length];
+        for (int i = 0; i < coordinates.length; i++)
+            convertedCoordinates[i] = convertCoordinateSystem(coordinates[i],source,target);
+        return convertedCoordinates;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Converts a coordinate from one coordinate system to another
+     * @param coordinate The input Coordinate to be converted
+     * @param source The source Coordinate Reference System (CRS) representation
+     * @param target The target Coordinate Reference System (CRS) representation
+     * @return A new Coordinate object representing the converted coordinate
+     * @throws RuntimeException If any error occurs during the coordinate conversion */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static Coordinate[] convertWGS84ToLambert93(Coordinate[] lambertCoordinates)
-    {
-        Coordinate[] wsgCoordinates = new Coordinate[lambertCoordinates.length];
-        for (int i = 0; i < lambertCoordinates.length; i++)
-            wsgCoordinates[i] = convertWGS84ToLambert93(lambertCoordinates[i]);
-        return wsgCoordinates;
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Converts Lambert-93 coordinates to degrees (latitude and longitude)
-     * @param lambertCoordinate The Lambert-93 coordinate to be converted
-     * @return A Coordinate object representing the converted latitude and longitude in degrees */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static Coordinate convertLambert93ToWGS84(Coordinate lambertCoordinate)
-    {
-        return convertCoordinateSystem(lambertCoordinate,"EPSG:2154","EPSG:4326");
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static Coordinate convertWGS84ToLambert93(Coordinate lambertCoordinate)
-    {
-        return convertCoordinateSystem(lambertCoordinate,"EPSG:4326","EPSG:2154");
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static Coordinate convertCoordinateSystem(Coordinate lambertCoordinate,String source, String target)
+    public static Coordinate convertCoordinateSystem(Coordinate coordinate,String source, String target)
     {
         try {
             CoordinateReferenceSystem sourceCRS = CRS.decode(source);
             CoordinateReferenceSystem targetCRS = CRS.decode(target);
             MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS, true);
-            DirectPosition2D sourcePosition = new DirectPosition2D(sourceCRS, lambertCoordinate.getX(), lambertCoordinate.getY());
+            DirectPosition2D sourcePosition = new DirectPosition2D(sourceCRS, coordinate.getX(), coordinate.getY());
             DirectPosition2D targetPosition = new DirectPosition2D();
             transform.transform(sourcePosition, targetPosition);
             double latitude = targetPosition.getY();
@@ -90,4 +77,7 @@ public class CoordinateUtils
         }
         catch(Exception e){throw new RuntimeException();}
     }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public static Coordinate[] convertLambert93ToWGS84(Coordinate[] coordinates)
+    {return convertCoordinatesSystems(coordinates,LAMBERT93,WSG84);}
 }

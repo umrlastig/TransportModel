@@ -46,7 +46,11 @@ public class Link
     public ROUTE_TYPE getType(){return this.type;}
     public String getName(){return this.name;}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Combines two Link objects to create a new Link with fused properties
+     * The resulting Link will have properties calculated based on the average of the input links' properties
+     * @param linkToFusWith The Link to fuse with the current Link
+     * @return A new fused Link object
+     * @throws RuntimeException If the two input links are not connected (don't have en common node) */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public Link fusLink(Link linkToFusWith)
     {

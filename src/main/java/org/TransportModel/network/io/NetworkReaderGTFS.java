@@ -179,7 +179,7 @@ public final class NetworkReaderGTFS
         return routeTrips;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Create missing files (not obligatory files) */
+    /** Create missing files (not obligatory files) toDO create transfers.txt if missing*/
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     private static void createMissingFiles()
     {

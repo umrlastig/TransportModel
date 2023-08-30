@@ -4,47 +4,37 @@ package org.TransportModel.generation;
 import org.TransportModel.network.Link;
 import org.TransportModel.network.Network;
 import org.TransportModel.network.Node;
-import org.TransportModel.utils.CoordinateUtils;
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.util.FastMath;
-import org.jgrapht.alg.shortestpath.AStarShortestPath;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
-import org.jgrapht.graph.DirectedWeightedMultigraph;
-import org.locationtech.jts.geom.Coordinate;
 
 import java.util.HashMap;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/** */
+/** A utility class for calculating flow distributions within zones */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 public class FlowDistributor
 {
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /**  Calculate minimum travel times */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static RealMatrix calculateMinTimes(HashMap<String,Zone> zones,Network... networks) {
+    public static RealMatrix calculateMinTimes(HashMap<String,Zone> zones, Network networkTC, Network networkTI)
+    {
         RealMatrix minTimes = MatrixUtils.createRealMatrix(zones.size(), zones.size());
-        for (Network network : networks) {
-            DirectedWeightedMultigraph<Node, Link> graph = network.createGraph();
-            DijkstraShortestPath<Node,Link> shortestPath = new DijkstraShortestPath<>(graph);
-            for (Zone from : zones.values())
-                for (Zone to : zones.values())
-                    if (!from.equals(to)) {
-                        double start = System.currentTimeMillis();
-                        Coordinate fromC = from.getCentroid(), toC = to.getCentroid();
-                        Coordinate center = new Coordinate((fromC.x + toC.x) / 2, (fromC.y + toC.y) / 2);
-                        double radius = CoordinateUtils.calculateWSG84Distance(fromC,center);
-                        double maxDistance = 1.2*radius;
-                        double time = shortestPath.getPath(network.getNode(from.getId()),network.getNode(to.getId())).getWeight();
-                        System.out.println(System.currentTimeMillis()-start);
-                    }
-        }
+        DijkstraShortestPath<Node,Link> shortestPathTC = new DijkstraShortestPath<>(networkTC.createGraph());
+        DijkstraShortestPath<Node,Link> shortestPathTI = new DijkstraShortestPath<>(networkTI.createGraph());
+        for (Zone from : zones.values())
+            for (Zone to : zones.values())
+                if (!from.equals(to)) {
+                    double timeTC = shortestPathTC.getPathWeight(networkTC.getNode(from.getId()),networkTC.getNode(to.getId()));
+                    double timeTI = shortestPathTI.getPathWeight(networkTI.getNode(from.getId()),networkTI.getNode(to.getId()));
+                    minTimes.setEntry(from.getIndex(),to.getIndex(),Math.min(timeTI,timeTC));}
         return minTimes;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Fratar algorithm */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public static RealVector[] calculateWeights(RealVector inPopulation, RealVector atActivityPlace, RealMatrix minTimes)
+    public static RealVector[] calculateWeightsFratar(RealVector inPopulation, RealVector atActivityPlace, RealMatrix minTimes)
     {
         final double epsilon = 1e-5, t0 = 1;
         int zoneNbr = inPopulation.getDimension();

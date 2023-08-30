@@ -4,7 +4,6 @@ import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.PropertyDescriptor;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -45,20 +44,5 @@ public abstract class ShapeFileUtil
             catch (Exception e) {e.printStackTrace();}
         }
         catch(IOException e){throw new RuntimeException();}
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Displays the attributes of a given SimpleFeature
-     * @param feature the SimpleFeature whose attributes are to be displayed */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    @SuppressWarnings("unused") public static void displayFeatureAttributes(SimpleFeature feature)
-    {
-        PropertyDescriptor[] descriptors = feature.getFeatureType().getDescriptors().toArray(new PropertyDescriptor[0]);
-        System.out.println("---------------------");
-        for (PropertyDescriptor propertyDescriptor : descriptors) {
-            String name = propertyDescriptor.getName().getLocalPart();
-            Object value = feature.getAttribute(name);
-            String type = propertyDescriptor.getType().getBinding().getSimpleName();
-            System.out.println("Attribute : " + name+", "+ type+", "+ value);
-        }
     }
 }

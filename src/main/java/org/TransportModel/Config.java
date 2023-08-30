@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.IOException;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-/** */
+/** Configuration class */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
  public final class Config
 {
@@ -18,6 +18,9 @@ import java.io.IOException;
     @JsonProperty("generation_files") public GenerationFiles generationFiles;
     private static Config instance;
     private Config() {}
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** Getters/Setters */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static double getTransportCapacity(Link.ROUTE_TYPE type){return getInstance().transportValues.getCapacity(type);}
     public static NetworkFiles getNetworkFiles(){return getInstance().networkFiles;}
     public static GenerationFiles getGenerationFiles(){return getInstance().generationFiles;}
@@ -33,7 +36,7 @@ import java.io.IOException;
         return instance;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Class for transport values configuration */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static class TransportValues
     {
@@ -43,7 +46,7 @@ import java.io.IOException;
         public int getCapacity(Link.ROUTE_TYPE routeType){return this.capacities.getCapacity(routeType);}
         public boolean areHoursValid(double first, double last){return validHours.areValid(first,last);}
         ///////////////////////////////////////////////////////////////////////////////////////////////////
-        /** */
+        /** Class for transport max capacities */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         public static class Capacities
         {
@@ -53,7 +56,9 @@ import java.io.IOException;
             @JsonProperty("subway") public int subwayCapacity;
             @JsonProperty("default") public int defaultCapacity;
             ///////////////////////////////////////////////////////////////////////////////////////////////////
-            /** */
+            /** Get the max capacity for a specific route type
+             * @param routeType The route type
+             * @return The capacity for the specified route type */
             ///////////////////////////////////////////////////////////////////////////////////////////////////
             public int getCapacity(Link.ROUTE_TYPE routeType)
             {
@@ -66,18 +71,26 @@ import java.io.IOException;
             }
         }
         ///////////////////////////////////////////////////////////////////////////////////////////////////
-        /** */
+        /** Represents the allowable time range during which a transportation service is considered valid */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         public static class ValidHours
         {
             @JsonProperty("min") public int min;
             @JsonProperty("max") public int max;
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            /** Check if hours are valid within the specified range
+             * @param firstTraversal The first traversal time
+             * @param lastTraversal  The last traversal time
+             * @return True if the hours are valid, false otherwise */
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
             public boolean areValid(double firstTraversal,double lastTraversal)
-            {return firstTraversal/3600 <= max && lastTraversal/3600 >= min;}
+            {
+                return firstTraversal/3600 <= max && lastTraversal/3600 >= min;
+            }
         }
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Class for network files configuration */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static class NetworkFiles
     {
@@ -85,7 +98,7 @@ import java.io.IOException;
         @JsonProperty("gtfs") public GTFS gtfs;
         private NetworkFiles() {}
         ///////////////////////////////////////////////////////////////////////////////////////////////////
-        /** */
+        /**  Class for GTFS configuration */
         ///////////////////////////////////////////////////////////////////////////////////////////////////
         public static class GTFS
         {
@@ -98,7 +111,7 @@ import java.io.IOException;
         }
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Class for Generation files configuration */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static class GenerationFiles
     {

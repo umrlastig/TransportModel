@@ -24,17 +24,16 @@ public final class NetworkReaderBDTOPO
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public static Network readFiles()
     {
-        final String CONDITION="ETAT",IMPORTANCE="IMPORTANCE",ACCESS="ACCES_VL",FREE="Libre",USED="En service",TOLL="A pÃ©age";
+        final String CONDITION="ETAT",IMP="IMPORTANCE",ACCESS="ACCES_VL",FREE="Libre",USED="En service",TOLL="A pÃ©age";
         Network network = new Network();
         for(String bdtopoFilePath:Config.getNetworkFiles().bdtopo)
             ShapeFileUtil.readFile(Paths.get(bdtopoFilePath), feature -> {
                 //File values
-                boolean free = feature.getAttribute(ACCESS).equals(FREE) || feature.getAttribute(ACCESS).equals(TOLL);
+                boolean notPrivate = feature.getAttribute(ACCESS).equals(FREE)||feature.getAttribute(ACCESS).equals(TOLL);
+                boolean importanceOk = !feature.getAttribute(IMP).equals("6") && !feature.getAttribute(IMP).equals("5");
                 boolean used = feature.getAttribute(CONDITION).equals(USED);
-                boolean circulationPossible = !feature.getAttribute(IMPORTANCE).equals("6")
-                        && !feature.getAttribute(IMPORTANCE).equals("5");
                 //If valid road, create and add links to the network
-                if(circulationPossible && free && used)
+                if(importanceOk && notPrivate && used)
                     createRoadLinks(network,feature);
             });
         return network;
@@ -42,7 +41,7 @@ public final class NetworkReaderBDTOPO
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Adds nodes and links to the network based on the provided feature */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private static void createRoadLinks(Network network, SimpleFeature feature) throws Exception
+    private static void createRoadLinks(Network network, SimpleFeature feature)
     {
         final String SPEED="VIT_MOY_VL",SENS="SENS",BI="Double sens",INV="Sens inverse",LANES="NB_VOIES",NATURE="NATURE";
         //File values

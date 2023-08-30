@@ -4,13 +4,15 @@ import org.TransportModel.generation.Zone;
 import org.TransportModel.utils.CoordinateUtils;
 import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.index.kdtree.KdNode;
 import org.locationtech.jts.index.kdtree.KdTree;
-import org.locationtech.jts.operation.union.UnaryUnionOp;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /** Represents a transportation network */
@@ -172,7 +174,8 @@ public class Network
             if (node.getInLinks().size() == 1 && node.getOutLinks().size() == 1 ) {
                 Node fromNode = node.getInLinks().get(0).getFromNode(), toNode = node.getOutLinks().get(0).getToNode();
                 if(!fromNode.equals(toNode)) {
-                    Link link1 = node.getInLinks().get(0), link2 = node.getOutLinks().get(0);
+                    Link link1 = node.getInLinks().get(0);
+                    Link link2 = node.getOutLinks().get(0);
                     Link newLink = link1.fusLink(link2);
                     addLink(newLink);
                     removeNode(node);}}

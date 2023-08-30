@@ -45,7 +45,6 @@ public class Node
     public void removeOutLink(String id){this.outLinks.remove(id);}
     public double getX(){return this.getCoordinate().getX();}
     public double getY(){return this.getCoordinate().getY();}
-
     public Link getOutLink(String id) {return this.outLinks.get(id);}
     public Link getInLink(String id) {return this.inLinks.get(id);}
 }
