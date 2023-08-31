@@ -11,7 +11,6 @@ import org.apache.commons.math3.linear.RealVector;
 
 import java.util.HashMap;
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /**                                       Main Class                                             */
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -45,6 +44,7 @@ public class Main
         networkTC.removeNotStronglyConnectedNodes(); t();
         networkTC.removeTransitNodes(); t();
         networkTC.linkZones(zones); t();
+        networkTC.removeNotStronglyConnectedNodes(); t();
         //Calculate RealFlows
         RealMatrix minTimes = FlowDistributor.calculateMinTimes(zones,networkTC,networkTI); t();
         RealVector[] weights = FlowDistributor.calculateWeightsFratar(workersInPopulation,jobsAtWorkplace,minTimes); t();

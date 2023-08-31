@@ -4,7 +4,6 @@ import org.TransportModel.generation.Zone;
 import org.TransportModel.utils.CoordinateUtils;
 import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.graph.DirectedWeightedMultigraph;
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.index.kdtree.KdNode;
 import org.locationtech.jts.index.kdtree.KdTree;
@@ -32,13 +31,8 @@ public class Network
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Getters/Setters */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public boolean containsNode(String id){return this.nodes.containsKey(id);}
-    public boolean containsNode(Node node){return this.containsNode(node.getId());}
-    public boolean containsLink(String id){return this.links.containsKey(id);}
-    public boolean containsLink(Link link){return this.containsLink(link.getId());}
     public Node getNode(String id){return this.nodes.get(id);}
     public List<Node> getNodes(){return new ArrayList<>(this.nodes.values());}
-    public List<Link> getLinks(){return new ArrayList<>(this.links.values());}
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     /** Adds a new node. If the node already exists, replace  link's node linked
      * @param node The Node to add */
@@ -93,7 +87,7 @@ public class Network
         this.links.put(link.getId(),link);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** Creates a graph representation of the network using JGraphT library (weight = time)
+    /** Creates a directed weighted graph representation of the network (weight = time)
      * @return The created graph */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public DirectedWeightedMultigraph<Node,Link> createGraph()
@@ -109,15 +103,50 @@ public class Network
         return graph;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Creates a KdTree, a data structure used for efficient range searches
+     @return A KdTree populated with nodes from the network */
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    public KdTree createKdTree()
+    {
+        KdTree kdTree = new KdTree();
+        for(Node node:this.getNodes())
+            kdTree.insert(node.getCoordinate(),node);
+        return kdTree;
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
+    /** Removes all transit nodes and connects their neighboring nodes directly. A transit node is a
+     * node that is connected to exactly two other nodes, either unidirectionally or bidirectionally */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public void removeTransitNodes()
     {
-        removeBidirectionalTransitNodes();
-        removeUnidirectionalTransitNodes();
+        for (Node node : this.getNodes()) {
+            //Remove unidirectional
+            if (node.getInLinks().size() == 1 && node.getOutLinks().size() == 1) {
+                Link inLink = node.getInLinks().get(0);
+                Link outLink = node.getOutLinks().get(0);
+                if (!inLink.getFromNode().equals(outLink.getToNode())) {
+                    addLink(inLink.fusLink(outLink));
+                    removeNode(node);}}
+            //remove bidirectional
+            if (node.getInLinks().size() == 2 && node.getOutLinks().size() == 2) {
+                Link inLink1 = node.getInLinks().get(0);
+                Link inLink2 = node.getInLinks().get(1);
+                Link outLink1 = node.getOutLinks().get(0);
+                Link outLink2 = node.getOutLinks().get(1);
+                //inLink1 -> node -> outLink1 | outLink2 <- node <- inLink2
+                boolean cond1 = inLink1.getFromNode().equals(outLink2.getToNode())
+                             && inLink2.getFromNode().equals(outLink1.getToNode());
+                //inLink1 -> node -> outLink2 | outLink1 <- node <- inLink2
+                boolean cond2 = inLink1.getFromNode().equals(outLink1.getToNode())
+                             && inLink2.getFromNode().equals(outLink2.getToNode());
+                if ((cond1 || cond2) && !inLink1.getFromNode().equals(inLink2.getFromNode())) {
+                    addLink(inLink1.fusLink(cond1 ? outLink1 : outLink2));
+                    addLink(inLink2.fusLink(cond1 ? outLink2 : outLink1));
+                    removeNode(node);}}
+        }
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /*** Removes nodes that are not part of the largest strongly connected component in the graph */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public void removeNotStronglyConnectedNodes()
     {
@@ -135,97 +164,45 @@ public class Network
                     this.removeNode(node);
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void removeBidirectionalTransitNodes()
-    {
-        for (Node node : this.getNodes())
-            if(node.getInLinks().size() == 2 && node.getOutLinks().size() == 2) {
-                Node fromNode0 = node.getInLinks().get(0).getFromNode(), toNode0 = node.getOutLinks().get(0).getToNode();
-                Node fromNode1 = node.getInLinks().get(1).getFromNode(), toNode1 = node.getOutLinks().get(1).getToNode();
-                if(fromNode0.equals(toNode0) && fromNode1.equals(toNode1) && !fromNode0.equals(fromNode1))
-                {
-                    Link directLink1 = node.getInLinks().get(0), directLink2 = node.getOutLinks().get(1);
-                    Link inverseLink1 = node.getInLinks().get(1), inverseLink2 = node.getOutLinks().get(0);
-                    Link newDirectLink = directLink1.fusLink(directLink2);
-                    Link newInverseLink = inverseLink1.fusLink(inverseLink2);
-                    addLink(newDirectLink);
-                    addLink(newInverseLink);
-                    removeNode(node);
-                }
-                else if(fromNode0.equals(toNode1) && fromNode1.equals(toNode0) && !fromNode0.equals(fromNode1))
-                {
-                    Link directLink1 = node.getInLinks().get(0), directLink2 = node.getOutLinks().get(0);
-                    Link inverseLink1 = node.getInLinks().get(1), inverseLink2 = node.getOutLinks().get(1);
-                    Link newDirectLink = directLink1.fusLink(directLink2);
-                    Link newInverseLink = inverseLink1.fusLink(inverseLink2);
-                    addLink(newDirectLink);
-                    addLink(newInverseLink);
-                    removeNode(node);
-                }
-            }
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public void removeUnidirectionalTransitNodes()
-    {
-        for (Node node : this.getNodes())
-            if (node.getInLinks().size() == 1 && node.getOutLinks().size() == 1 ) {
-                Node fromNode = node.getInLinks().get(0).getFromNode(), toNode = node.getOutLinks().get(0).getToNode();
-                if(!fromNode.equals(toNode)) {
-                    Link link1 = node.getInLinks().get(0);
-                    Link link2 = node.getOutLinks().get(0);
-                    Link newLink = link1.fusLink(link2);
-                    addLink(newLink);
-                    removeNode(node);}}
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Links zones' centroids to the nearest nodes
+     * @param zones A HashMap containing zones to be linked */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     public void linkZones(HashMap<String, Zone> zones)
     {
-        KdTree kdTree = new KdTree();
-        for(Node node:this.getNodes())
-            kdTree.insert(node.getCoordinate(),node);
+        KdTree kdTree = this.createKdTree();
         for(Zone zone:zones.values()) {
             Node zoneNode = new Node(zone.getId(),zone.getName(),zone.getCentroid());
+            Node closestNode = this.getClosestNode(kdTree,zoneNode);
             this.addNode(zoneNode);
-            List<Node> nearNodes = getNearNodes(kdTree,zone.getCentroid());
-            Node closestNode = getNearestNode(nearNodes,zoneNode);
             this.addLink(new Link(zoneNode,closestNode,"centroidLink"));
             this.addLink(new Link(closestNode,zoneNode,"centroidLink"));}
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
+    /** Returns the closest node of the KdTree to the given node
+     @param kdTree The KdTree to search in
+     @param node The node to find the closest node to
+     @return The closest node of the KdTree */
     ///////////////////////////////////////////////////////////////////////////////////////////////////
-    private Node getNearestNode(List<Node> nearNodes, Node zoneNode)
-    {
-        double minDistance = Double.MAX_VALUE;
-        Node closestNode = null;
-        for(Node node: nearNodes){
-            if(!node.equals(zoneNode)) {
-                double distance = CoordinateUtils.calculateWSG84Distance(node.getCoordinate(),zoneNode.getCoordinate());
-                if(closestNode == null || distance < minDistance) {
-                    closestNode = node;
-                    minDistance = distance;}}}
-        return closestNode;
-    }
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    /** */
-    ///////////////////////////////////////////////////////////////////////////////////////////////////
-    public List<Node> getNearNodes(KdTree kdTree, Coordinate coordinate)
+    private Node getClosestNode(KdTree kdTree, Node node)
     {
         List<?> nearKdNodes = new ArrayList<>();
         List<Node> nearNodes = new ArrayList<>();
         double size = 0.01;
         while(nearKdNodes == null || nearKdNodes.isEmpty() || nearKdNodes.size() == 1) {
-            double x = coordinate.x, y = coordinate.y;
+            double x = node.getX(), y =  node.getY();
             Envelope envelope = new Envelope(x-size,x+size,y-size,y+size);
             nearKdNodes = kdTree.query(envelope);
             size = size*2;}
         for(Object kdNode: nearKdNodes)
             nearNodes.add((Node)((KdNode)kdNode).getData());
-        return nearNodes;
+        double minDistance = Double.MAX_VALUE;
+        Node closestNode = null;
+        for(Node nearNode: nearNodes){
+            if(!nearNode.equals(node)) {
+                double distance = CoordinateUtils.calculateWSG84Distance(nearNode.getCoordinate(),node.getCoordinate());
+                if(closestNode == null || distance < minDistance) {
+                    closestNode = nearNode;
+                    minDistance = distance;}}}
+        return closestNode;
     }
 }
