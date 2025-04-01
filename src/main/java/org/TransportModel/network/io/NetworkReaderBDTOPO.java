@@ -26,7 +26,7 @@ import org.TransportModel.utils.CoordinateUtils;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.MultiLineString;
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
 
 import java.nio.file.Paths;
 

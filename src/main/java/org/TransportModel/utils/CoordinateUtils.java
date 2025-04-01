@@ -17,12 +17,12 @@
 
 package org.TransportModel.utils;
 
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.geometry.Position2D;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.GeodeticCalculator;
 import org.locationtech.jts.geom.Coordinate;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 /** A utility class for working with coordinates*/
@@ -85,8 +85,8 @@ public class CoordinateUtils
             CoordinateReferenceSystem sourceCRS = CRS.decode(source);
             CoordinateReferenceSystem targetCRS = CRS.decode(target);
             MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS, true);
-            DirectPosition2D sourcePosition = new DirectPosition2D(sourceCRS, coordinate.getX(), coordinate.getY());
-            DirectPosition2D targetPosition = new DirectPosition2D();
+            Position2D sourcePosition = new Position2D(sourceCRS, coordinate.getX(), coordinate.getY());
+            Position2D targetPosition = new Position2D();
             transform.transform(sourcePosition, targetPosition);
             double latitude = targetPosition.getY();
             double longitude = targetPosition.getX();

@@ -24,9 +24,10 @@ import org.TransportModel.network.Link;
 import java.io.File;
 import java.io.IOException;
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-/** Configuration class */
-///////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Configuration class
+ **/
  public final class Config
 {
     private static final String CONFIG_PATH = "src/main/resources/config.json";
